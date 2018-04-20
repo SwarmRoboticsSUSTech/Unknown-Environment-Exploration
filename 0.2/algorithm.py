@@ -55,8 +55,12 @@ def frontierFilter(frontiers):
     lenghtoffrotiers = 10 
     newfrontiers = []
     if len(frontiers) >= lenghtoffrotiers:
+        remove_lenght = math.ceil(len(frontiers) * 0.2)
+        for i in range(remove_lenght):
+            index = math.ceil(random.random() * (len(frontiers) - 1)) 
+            del(frontiers[index])
         newfrontiers.append(frontiers[0])
-        for i in  range(1, len(frontiers)):
+        for i in range(1, len(frontiers)):
             temd_frontier = frontiers[i]
             index = len(newfrontiers) - 1
             for j in range(len(newfrontiers)):
