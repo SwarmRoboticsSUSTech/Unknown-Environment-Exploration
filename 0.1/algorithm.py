@@ -108,8 +108,7 @@ def updateIndividualByBSO(robot_amount, robotIndex, allFrontiers, map_grid_matri
                 indi_temp.x = tem * frontiers[indi].x + (1 - tem) * frontiers_1[indi_1].x
                 indi_temp.y = tem * frontiers[indi].y + (1 - tem) * frontiers_1[indi_1].y
         indi_temp.weight = calculateDistance(map_grid_matrix, indi_temp.x, indi_temp.y, robotlocation)
-        if(frontiers[i].weight 
-            < indi_temp.weight):
+        if(frontiers[i].weight < indi_temp.weight):
             frontiers[i] = indi_temp
     return frontiers
 
