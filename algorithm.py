@@ -22,6 +22,7 @@ def action(map:map_object):
         move_control = [random.randint(0,4) for i in range(robot_amount)]
     else:
         calculate_allfrontiers(allFrontiers, centerfrontiers, total_weights)
+     
         # allFrontiersCopy = allFrontiers.copy()
         for i in range(robot_amount):
             allFrontiers[i] = updateIndividualByBSO(robot_amount, i, allFrontiers, map_grid_matrix, robotLocations[i], centerfrontiers, total_weights)
@@ -103,7 +104,7 @@ def calculateDistance(map_grid_matrix, x, y, robotlocation):
     return distance
 
 def updateIndividualByBSO(robot_amount, robotIndex, allFrontiers, map_grid_matrix, robotlocation, centerfrontiers, total_weights):
-    prob_one_cluster = 0.5 #0.8
+    prob_one_cluster = 0.3 #0.8
     frontiers_1 = allFrontiers[robotIndex]
     # print("robotIndex", robotIndex)
 

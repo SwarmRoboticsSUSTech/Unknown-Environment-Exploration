@@ -1,4 +1,5 @@
 import pandas as pd
+import itertools
 from settings import *
 
 class robot:
@@ -23,9 +24,11 @@ class robot:
         if robot.judge_valid_loaction(self.x, self.y, map.blocks, map.grid_dimension):
             self.previous_x = self.x
             self.previous_y = self.y
+            return int(bool(action))
         else:
             self.x = self.previous_x
             self.y = self.previous_y
+            return 0
 
     @staticmethod
     def judge_valid_loaction(x, y, blocks, grid_dimension):
@@ -122,3 +125,26 @@ class robotlocation:
     def __init__(self, row, column):
         self.x = row
         self.y = column
+
+class SimulatorStatus:
+    def __init__(self):
+        self.time = 0
+        self.robot_route_length = 0
+
+    def update_time(self):
+        self.time += 1
+
+    def update_robot_route_length(self, cost_this_interval):
+        self.robot_route_length += cost_this_interval
+
+    @staticmethod
+    def judge_over(map:map):
+        one_dimension_map = list(itertools.chain(*map.grid))
+        if UNEXPLARATION_AREA in one_dimension_map or EXPLORATED_BOUND in one_dimension_map:
+            return False
+        else:
+            return True
+
+
+    def __repr__(self):
+        return "run time is " + str(self.time) + " " + "robots total route length is " + str(self.robot_route_length)

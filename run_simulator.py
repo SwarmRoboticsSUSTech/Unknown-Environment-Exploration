@@ -1,6 +1,6 @@
 import pygame
 
-from simulator import map, robot, OutsideBoundryError
+from simulator import map, robot, OutsideBoundryError, SimulatorStatus
 from algorithm import action
 from settings import *
 
@@ -38,7 +38,7 @@ done = False
 
 # Used to manage how fast the screen updates
 clock = pygame.time.Clock()
-
+simulator_status = SimulatorStatus()
 # -------- Main Program Loop -----------
 while not done:
     # for event in pygame.event.get():  # User did something
@@ -58,11 +58,13 @@ while not done:
 
     # Set the screen background
     screen.fill(BLACK)
+    actions = action(map)
+    real_action_this_interval = 0
 
     for i, robot_i in enumerate(map.robots):
         map.grid[robot_i.x][robot_i.y] = EXPLORATED_AREA
-        actions = action(map)
-        robot_i.move(map, action=actions[i])
+        
+        real_action_this_interval += robot_i.move(map, action=actions[i])
         map.grid[robot_i.x][robot_i.y] = ROBOT_AREA
 
     for robot_i in map.robots:
@@ -74,6 +76,10 @@ while not done:
         map.grid[robot_i.x][robot_i.y] = ROBOT_AREA
 
     map.view_real_exploration_bounds()
+    simulator_status.update_time()
+    simulator_status.update_robot_route_length(real_action_this_interval)
+    print(simulator_status)  # for debug
+    done = simulator_status.judge_over(map)
 
     # Draw the grid
     for row in range(grid_dimension[0]):
