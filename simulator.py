@@ -130,21 +130,38 @@ class SimulatorStatus:
     def __init__(self):
         self.time = 0
         self.robot_route_length = 0
+        self.block_time = 0
+        self.final_status = "run"
 
     def update_time(self):
         self.time += 1
 
     def update_robot_route_length(self, cost_this_interval):
         self.robot_route_length += cost_this_interval
+        if cost_this_interval == 0:
+            self.block_time += 1
+        else:
+            self.block_time = 0
+
+    def update_status(self, status): # TODO
+        self.final_status = status
+        
 
     @staticmethod
     def judge_over(map:map):
         one_dimension_map = list(itertools.chain(*map.grid))
-        if UNEXPLARATION_AREA in one_dimension_map or EXPLORATED_BOUND in one_dimension_map:
-            return False
-        else:
+        print(one_dimension_map)
+        if UNEXPLARATION_AREA not in one_dimension_map and EXPLORATED_BOUND not in one_dimension_map:
             return True
+        else:
+            return False
 
+    def judge_blocking(self):
+        if self.block_time >= 50:
+            self.final_status = "block"
+            return True
+        else:
+            return False
 
     def __repr__(self):
-        return "run time is " + str(self.time) + " " + "robots total route length is " + str(self.robot_route_length)
+        return "run time is " + str(self.time) + " " + "robots total route length is " + str(self.robot_route_length) +" " + "status is " + self.final_status

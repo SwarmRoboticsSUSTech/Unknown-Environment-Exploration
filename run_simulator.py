@@ -35,12 +35,12 @@ pygame.display.set_caption("Frontier-based Unknown Environment Exploration")
 
 # Loop until the user clicks the close button.
 done = False
-
+block = False
 # Used to manage how fast the screen updates
 clock = pygame.time.Clock()
 simulator_status = SimulatorStatus()
 # -------- Main Program Loop -----------
-while not done:
+while not (done or block):
     # for event in pygame.event.get():  # User did something
     #     if event.type == pygame.QUIT:  # If user clicked close
     #         done = True  # Flag that we are done so we exit this loop
@@ -78,9 +78,13 @@ while not done:
     map.view_real_exploration_bounds()
     simulator_status.update_time()
     simulator_status.update_robot_route_length(real_action_this_interval)
-    print(simulator_status)  # for debug
+    
+    
+    block = simulator_status.judge_blocking()
     done = simulator_status.judge_over(map)
-
+    if done:
+        simulator_status.update_status("success")
+    print(simulator_status)  # for debug
     # Draw the grid
     for row in range(grid_dimension[0]):
         for column in range(grid_dimension[1]):
