@@ -122,6 +122,8 @@ def robots_simulator(filename):
 
 if __name__ == '__main__':
     run_time = time.asctime().split()
-    filename = ''.join(run_time).replace(":", "")
+    filename = ''.join(run_time).replace(":", "") + '.csv'
+    with open(filename, "w+") as f:
+        f.write("run_time route_length status" + "\n")
     for i in range(RUN_TIMES):
         robots_simulator(filename)
