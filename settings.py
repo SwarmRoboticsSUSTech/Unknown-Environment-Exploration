@@ -21,3 +21,6 @@ MARGIN = 1
 grid_dimension = (20, 40)
 
 CLOCK_TICK = 50
+
+BLOCK_TIME = 50
+DIE_TIME = 1000

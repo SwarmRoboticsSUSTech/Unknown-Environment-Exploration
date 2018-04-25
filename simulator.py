@@ -1,5 +1,6 @@
 import pandas as pd
 import itertools
+
 from settings import *
 
 class robot:
@@ -157,11 +158,22 @@ class SimulatorStatus:
             return False
 
     def judge_blocking(self):
-        if self.block_time >= 50:
+        if self.block_time >= BLOCK_TIME:
             self.final_status = "block"
+            return True
+        elif self.time >= DIE_TIME:
             return True
         else:
             return False
 
     def __repr__(self):
         return "run time is " + str(self.time) + " " + "robots total route length is " + str(self.robot_route_length) +" " + "status is " + self.final_status
+
+    def save_log(self, filename):
+        try:
+            with open(filename, "a") as f:
+                f.write(self.__repr__() + "\n")
+        except IOError:
+            with open(filename, "w+") as f:
+                f.write(self.__repr__() + "\n")
+
