@@ -106,4 +106,4 @@ venv.bak/
 .idea/
 .vscode/
 test
-datas/
+datas/*.csv
