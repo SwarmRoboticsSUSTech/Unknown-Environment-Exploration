@@ -133,9 +133,17 @@ class SimulatorStatus:
         self.robot_route_length = 0
         self.block_time = 0
         self.final_status = "run"
+        self.explorated_area = 0
+        self.unexplorated_area = 0
 
     def update_time(self):
         self.time += 1
+
+    def update_area_info(self, map:map):
+        one_dimension_map = list(itertools.chain(*map.grid))
+        self.explorated_area = one_dimension_map.count(3)
+        self.unexplorated_area = one_dimension_map.count(0) + one_dimension_map.count(4)
+
 
     def update_robot_route_length(self, cost_this_interval):
         self.robot_route_length += cost_this_interval
@@ -172,7 +180,7 @@ class SimulatorStatus:
     def save_log(self, filename):
         # try:
         with open(filename, "a") as f:
-            f.write(str(self.time) + " " + str(self.robot_route_length) + " " + self.final_status + "\n")
+            f.write(str(self.time) + " " + str(self.robot_route_length) + " " + self.final_status + " " + str(self.explorated_area) + " " + str(self.unexplorated_area) + "\n")
         # except IOError:
         #
         #     with open(filename, "a") as f:

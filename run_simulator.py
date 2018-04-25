@@ -81,6 +81,7 @@ def robots_simulator(filename):
         map.view_real_exploration_bounds()
         simulator_status.update_time()
         simulator_status.update_robot_route_length(real_action_this_interval)
+        simulator_status.update_area_info(map)
 
 
         # Draw the grid
@@ -122,8 +123,8 @@ def robots_simulator(filename):
 
 if __name__ == '__main__':
     run_time = time.asctime().split()
-    filename = ''.join(run_time).replace(":", "") + '.csv'
+    filename = 'datas/' + ''.join(run_time).replace(":", "") + '.csv'
     with open(filename, "w+") as f:
-        f.write("run_time route_length status" + "\n")
+        f.write("run_time route_length status explorated_area unexplorated_area" + "\n")
     for i in range(RUN_TIMES):
         robots_simulator(filename)
