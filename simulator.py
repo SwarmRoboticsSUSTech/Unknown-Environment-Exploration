@@ -178,11 +178,5 @@ class SimulatorStatus:
         return "run time is " + str(self.time) + " " + "robots total route length is " + str(self.robot_route_length) +" " + "status is " + self.final_status
 
     def save_log(self, filename):
-        # try:
         with open(filename, "a") as f:
             f.write(str(self.time) + " " + str(self.robot_route_length) + " " + self.final_status + " " + str(self.explorated_area) + " " + str(self.unexplorated_area) + "\n")
-        # except IOError:
-        #
-        #     with open(filename, "a") as f:
-        #         f.write(str(self.time) + " " + str(self.robot_route_length) + " " + self.final_status + "\n")
-

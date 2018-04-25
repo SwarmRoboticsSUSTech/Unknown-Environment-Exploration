@@ -12,13 +12,13 @@ def robots_simulator(filename):
 
     map = simulator_map(grid_dimension)
 
-    for x,y in map.get_robot_init_place("robot_init.csv"):
+    for x,y in map.get_robot_init_place("init_data/robot_init.csv"):
         if not map.is_location_in_environment(x, y, grid_dimension):
             raise OutsideBoundryError('init robot (x, y) not in map!')
         map.grid[x][y] = ROBOT_AREA
         map.robots.append(robot(x, y))    # add robots
 
-    for x,y in map.get_blocks_init_place("blocks.csv"):
+    for x,y in map.get_blocks_init_place("init_data/blocks.csv"):
         if not map.is_location_in_environment(x, y, grid_dimension):
             raise OutsideBoundryError('init block (x, y) not in map!')
         map.grid[x][y] = BLOCK_AREA
