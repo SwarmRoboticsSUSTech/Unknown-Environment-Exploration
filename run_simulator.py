@@ -123,5 +123,5 @@ def robots_simulator(filename):
 if __name__ == '__main__':
     run_time = time.asctime().split()
     filename = ''.join(run_time).replace(":", "")
-    for i in range(3):
+    for i in range(RUN_TIMES):
         robots_simulator(filename)
