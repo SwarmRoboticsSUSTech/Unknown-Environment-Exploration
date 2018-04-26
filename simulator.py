@@ -182,7 +182,7 @@ class SimulatorStatus:
     @staticmethod
     def judge_over(map: map):
         one_dimension_map = list(itertools.chain(*map.grid))
-        print(one_dimension_map)
+        # print(one_dimension_map)
         if UNEXPLARATION_AREA not in one_dimension_map and EXPLORATED_BOUND not in one_dimension_map:
             return True
         else:
