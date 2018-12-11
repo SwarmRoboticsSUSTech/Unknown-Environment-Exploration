@@ -7,79 +7,18 @@ from algorithm import action
 from settings import *
 from simulator import Map
 from simulator import SimulatorStatus, Robot
-from exceptions import OutsideBoundryError, ModeIllegalError
+from exceptions import OutsideBoundryError
 
 
 class Simulator(object):
-    def __init__(self, result_filename, mode='SELECTION', robot_init_filename=None, block_init_filename=None):
+    def __init__(self, result_filename, robot_init_filename=None, block_init_filename=None):
         self.result_filename = result_filename
-        self.mode = mode
 
-        if mode not in ('SELECTION', 'RANDOM_INIT', 'READFILE'):
-            raise ModeIllegalError('mode is illegal')
+        self.init_backend()
 
-        pygame.init()
+        self.select_mode()
 
-        screen_height = GRID_DIMENSION[0] * (WIDTH + MARGIN)
-        screen_width = GRID_DIMENSION[1] * (HEIGHT + MARGIN)
-        self.screen = pygame.display.set_mode([screen_width, screen_height])
-
-        pygame.display.set_caption(
-            "Frontier-based Unknown Environment Exploration")
-        self.clock = pygame.time.Clock()
-
-        # Draw the backend
-        for row in range(GRID_DIMENSION[0]):
-            for column in range(GRID_DIMENSION[1]):
-                pygame.draw.rect(
-                    self.screen, GREY,
-                    [(MARGIN + WIDTH) * column + MARGIN,
-                     (MARGIN + HEIGHT) * row + MARGIN, WIDTH, HEIGHT])
-
-        click_squences = {}
-        selection_mode = True
-        while selection_mode:
-            self.clock.tick(60)
-
-            for event in pygame.event.get():
-                if event.type == pygame.MOUSEBUTTONUP:
-                    click_pos = event.pos
-                    column = int((click_pos[0] - MARGIN) / (MARGIN + WIDTH))
-                    row = int((click_pos[1] - MARGIN) / (MARGIN + HEIGHT))
-
-                    if event.button == LEFT_CLICK:
-                        click_squences[(row, column)] = 'ROBOT'
-                        pygame.draw.rect(
-                            self.screen, RED,
-                            [(MARGIN + WIDTH) * column + MARGIN,
-                             (MARGIN + HEIGHT) * row + MARGIN, WIDTH, HEIGHT])
-                    elif event.button == RIGHT_CLICK:
-                        click_squences[(row, column)] = 'BLOCK'
-                        pygame.draw.rect(
-                            self.screen, BLACK,
-                            [(MARGIN + WIDTH) * column + MARGIN,
-                             (MARGIN + HEIGHT) * row + MARGIN, WIDTH, HEIGHT])
-                elif event.type == pygame.QUIT:
-                    selection_mode = False
-
-            pygame.display.update()
-
-        if self.mode is 'SELECTION':
-            robots_sequences = []
-            blocks_sequences = []
-            for k, v in click_squences.items():
-                if v is 'ROBOT':
-                    robots_sequences.append(k)
-                elif v is 'BLOCK':
-                    blocks_sequences.append(k)
-
-            self.origin_map = self.load_elements_by_click(robots_sequences, blocks_sequences)
-
-        elif self.mode is 'READFILE':
-            self.origin_map = self.load_elements_from_file(robot_init_filename, block_init_filename)
-
-        elif self.mode is 'RANDOM_INIT':
-            self.origin_map = self.load_elements_by_random()
+        self.init_map(robot_init_filename, block_init_filename)
 
     def flush(self):
         self.done = False
@@ -173,8 +112,8 @@ class Simulator(object):
         map = Map(GRID_DIMENSION)
         count = 0
         while count <= RANDOM_INIT_BLOCKS_NUM:
-            x = random.randint(0, GRID_DIMENSION[0]-1)
-            y = random.randint(0, GRID_DIMENSION[1]-1)
+            x = random.randint(0, GRID_DIMENSION[0] - 1)
+            y = random.randint(0, GRID_DIMENSION[1] - 1)
             if (x, y) not in map.blocks:
                 count += 1
                 map.grid[x][y] = BLOCK_AREA
@@ -182,8 +121,8 @@ class Simulator(object):
 
         count = 0
         while count <= RANDOM_INIT_ROBOTS_NUM:
-            x = random.randint(0, GRID_DIMENSION[0]-1)
-            y = random.randint(0, GRID_DIMENSION[1]-1)
+            x = random.randint(0, GRID_DIMENSION[0] - 1)
+            y = random.randint(0, GRID_DIMENSION[1] - 1)
             if (x, y) not in map.blocks:
                 count += 1
                 map.grid[x][y] = ROBOT_AREA
@@ -202,6 +141,142 @@ class Simulator(object):
         if self.done or self.block:
             self.simulator_status.save_log(self.result_filename)
         print(self.simulator_status)  # for debug
+
+    def init_backend(self):
+        pygame.init()
+
+        screen_height = (GRID_DIMENSION[0] + 4) * (WIDTH + MARGIN)
+        screen_width = GRID_DIMENSION[1] * (HEIGHT + MARGIN)
+        self.screen = pygame.display.set_mode([screen_width, screen_height])
+        self.screen.fill(GREEN)
+
+        pygame.display.set_caption(
+            "Frontier-based Unknown Environment Exploration")
+        self.clock = pygame.time.Clock()
+        for row in range(GRID_DIMENSION[0]):
+            for column in range(GRID_DIMENSION[1]):
+                pygame.draw.rect(
+                    self.screen, GREY,
+                    [(MARGIN + WIDTH) * column + MARGIN,
+                     (MARGIN + HEIGHT) * row + MARGIN, WIDTH, HEIGHT])
+
+    def select_mode(self):
+        pygame.draw.rect(
+            self.screen, GREY,
+            [(MARGIN + WIDTH) * 1 + MARGIN,
+             (MARGIN + HEIGHT) * (GRID_DIMENSION[0] + 1) + MARGIN, WIDTH, HEIGHT])
+        pygame.draw.rect(
+            self.screen, GREY,
+            [(MARGIN + WIDTH) * 2 + MARGIN,
+             (MARGIN + HEIGHT) * (GRID_DIMENSION[0] + 1) + MARGIN, WIDTH, HEIGHT])
+
+        pygame.draw.rect(
+            self.screen, GREY,
+            [(MARGIN + WIDTH) * 4 + MARGIN,
+             (MARGIN + HEIGHT) * (GRID_DIMENSION[0] + 1) + MARGIN, WIDTH, HEIGHT])
+        pygame.draw.rect(
+            self.screen, GREY,
+            [(MARGIN + WIDTH) * 5 + MARGIN,
+             (MARGIN + HEIGHT) * (GRID_DIMENSION[0] + 1) + MARGIN, WIDTH, HEIGHT])
+
+        pygame.draw.rect(
+            self.screen, GREY,
+            [(MARGIN + WIDTH) * 7 + MARGIN,
+             (MARGIN + HEIGHT) * (GRID_DIMENSION[0] + 1) + MARGIN, WIDTH, HEIGHT])
+        pygame.draw.rect(
+            self.screen, GREY,
+            [(MARGIN + WIDTH) * 8 + MARGIN,
+             (MARGIN + HEIGHT) * (GRID_DIMENSION[0] + 1) + MARGIN, WIDTH, HEIGHT])
+
+        selecting = True
+        while selecting:
+            self.clock.tick(60)
+
+            for event in pygame.event.get():
+                if event.type == pygame.MOUSEBUTTONUP:
+                    click_pos = event.pos
+                    column = int((click_pos[0] - MARGIN) / (MARGIN + WIDTH))
+                    row = int((click_pos[1] - MARGIN) / (MARGIN + HEIGHT))
+                    if row == GRID_DIMENSION[0] + 1:
+                        if column in (1, 2):
+                            pygame.draw.rect(
+                                self.screen, RED,
+                                [(MARGIN + WIDTH) * 1 + MARGIN,
+                                 (MARGIN + HEIGHT) * (GRID_DIMENSION[0] + 1) + MARGIN, WIDTH, HEIGHT])
+                            pygame.draw.rect(
+                                self.screen, RED,
+                                [(MARGIN + WIDTH) * 2 + MARGIN,
+                                 (MARGIN + HEIGHT) * (GRID_DIMENSION[0] + 1) + MARGIN, WIDTH, HEIGHT])
+                            self.mode = 'SELECTION'
+                        elif column in (4, 5):
+                            pygame.draw.rect(
+                                self.screen, RED,
+                                [(MARGIN + WIDTH) * 4 + MARGIN,
+                                 (MARGIN + HEIGHT) * (GRID_DIMENSION[0] + 1) + MARGIN, WIDTH, HEIGHT])
+                            pygame.draw.rect(
+                                self.screen, RED,
+                                [(MARGIN + WIDTH) * 5 + MARGIN,
+                                 (MARGIN + HEIGHT) * (GRID_DIMENSION[0] + 1) + MARGIN, WIDTH, HEIGHT])
+                            self.mode = 'RANDOM_INIT'
+                        elif column in (7, 8):
+                            pygame.draw.rect(
+                                self.screen, RED,
+                                [(MARGIN + WIDTH) * 7 + MARGIN,
+                                 (MARGIN + HEIGHT) * (GRID_DIMENSION[0] + 1) + MARGIN, WIDTH, HEIGHT])
+                            pygame.draw.rect(
+                                self.screen, RED,
+                                [(MARGIN + WIDTH) * 8 + MARGIN,
+                                 (MARGIN + HEIGHT) * (GRID_DIMENSION[0] + 1) + MARGIN, WIDTH, HEIGHT])
+                            self.mode = 'READFILE'
+                        selecting = False
+            pygame.display.update()
+
+    def init_map(self, robot_init_filename, block_init_filename):
+        if self.mode is 'SELECTION':
+            click_squences = {}
+            selecting = True
+            while selecting:
+                self.clock.tick(60)
+
+                for event in pygame.event.get():
+                    if event.type == pygame.MOUSEBUTTONUP:
+                        click_pos = event.pos
+                        column = int((click_pos[0] - MARGIN) / (MARGIN + WIDTH))
+                        row = int((click_pos[1] - MARGIN) / (MARGIN + HEIGHT))
+                        if 0 <= column < GRID_DIMENSION[1] and 0 <= row < GRID_DIMENSION[0]:
+                            if event.button == LEFT_CLICK:
+                                click_squences[(row, column)] = 'ROBOT'
+                                pygame.draw.rect(
+                                    self.screen, RED,
+                                    [(MARGIN + WIDTH) * column + MARGIN,
+                                     (MARGIN + HEIGHT) * row + MARGIN, WIDTH, HEIGHT])
+                            elif event.button == RIGHT_CLICK:
+                                click_squences[(row, column)] = 'BLOCK'
+                                pygame.draw.rect(
+                                    self.screen, BLACK,
+                                    [(MARGIN + WIDTH) * column + MARGIN,
+                                     (MARGIN + HEIGHT) * row + MARGIN, WIDTH, HEIGHT])
+
+                    elif event.type == pygame.QUIT:
+                        selecting = False
+
+                pygame.display.update()
+
+            robots_sequences = []
+            blocks_sequences = []
+            for k, v in click_squences.items():
+                if v is 'ROBOT':
+                    robots_sequences.append(k)
+                elif v is 'BLOCK':
+                    blocks_sequences.append(k)
+
+            self.origin_map = self.load_elements_by_click(robots_sequences, blocks_sequences)
+
+        elif self.mode is 'READFILE':
+            self.origin_map = self.load_elements_from_file(robot_init_filename, block_init_filename)
+
+        elif self.mode is 'RANDOM_INIT':
+            self.origin_map = self.load_elements_by_random()
 
     def gui_exit(self):
         pygame.quit()

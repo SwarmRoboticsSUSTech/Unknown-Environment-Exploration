@@ -4,6 +4,7 @@ RED = (255, 0, 0)  # robot   1
 BLACK = (0, 0, 0)  # blocks  2
 WHITE = (255, 255, 255)  # explorated places 3
 BLUE = (0, 0, 255)  # exploration bounds 4
+GREEN = (128, 128, 105)
 
 UNEXPLARATION_AREA = 0
 ROBOT_AREA = 1
@@ -16,7 +17,7 @@ WIDTH = 40
 HEIGHT = 40
 
 # This sets the margin between each cell
-MARGIN = 1
+MARGIN = 0
 
 GRID_DIMENSION = (20, 40)
 
