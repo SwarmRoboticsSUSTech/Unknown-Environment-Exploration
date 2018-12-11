@@ -1,141 +1,110 @@
-import time
+import copy
 
 import pygame
 
 from algorithm import action
 from settings import *
-from simulator import map as simulator_map
-from simulator import OutsideBoundryError, SimulatorStatus, robot
+from simulator import Map
+from simulator import OutsideBoundryError, SimulatorStatus, Robot
 
 
-def init_map(map:simulator_map, robot_init_filename, block_init_filename):
-    for x, y in map.get_robot_init_place(robot_init_filename):
-        if not map.is_location_in_environment(x, y, grid_dimension):
-            raise OutsideBoundryError('init robot (x, y) not in map!')
-        map.grid[x][y] = ROBOT_AREA
-        map.robots.append(robot(x, y))  # add robots
+class Simulator(object):
+    def __init__(self, result_filename):
+        self.result_filename = result_filename
 
-    for x, y in map.get_blocks_init_place(block_init_filename):
-        if not map.is_location_in_environment(x, y, grid_dimension):
-            raise OutsideBoundryError('init block (x, y) not in map!')
-        map.grid[x][y] = BLOCK_AREA
-        map.blocks.append((x, y))
+        pygame.init()
 
-def update_simulator_status(simulator_status, real_action_this_interval, map, filename, block, done):
-    simulator_status.update_time()
-    simulator_status.update_robot_route_length(real_action_this_interval)
-    simulator_status.update_area_info(map)
+        screen_height = GRID_DIMENSION[0] * WIDTH + GRID_DIMENSION[0] + 1
+        screen_width = GRID_DIMENSION[1] * HEIGHT + GRID_DIMENSION[1] + 1
+        self.screen = pygame.display.set_mode([screen_width, screen_height])
 
-    block = simulator_status.judge_blocking()
-    done = simulator_status.judge_over(map)
-    if done:
-        simulator_status.update_status("success")
-    if done or block:
-        simulator_status.save_log(filename)
-    print(simulator_status)  # for debug
-    return block, done
+        pygame.display.set_caption(
+            "Frontier-based Unknown Environment Exploration")
 
+    def flush(self):
+        self.done = False
+        self.block = False
 
-def robots_simulator(filename):
-    screen_height = grid_dimension[0] * WIDTH + grid_dimension[0] + 1
-    screen_width = grid_dimension[1] * HEIGHT + grid_dimension[1] + 1
+        self.clock = pygame.time.Clock()
 
-    map = simulator_map(grid_dimension)
-    init_map(map, "init_data/robot_init.csv", "init_data/blocks.csv")
-    
-    # Initialize pygame
-    pygame.init()
+        self.simulator_status = SimulatorStatus()
 
-    # Set the HEIGHT and WIDTH of the screen
-    WINDOW_SIZE = [screen_width, screen_height]
-    screen = pygame.display.set_mode(WINDOW_SIZE)
+        self.map = Map(GRID_DIMENSION)
 
-    # Set title of screen
-    pygame.display.set_caption(
-        "Frontier-based Unknown Environment Exploration")
+    def loop(self):
+        while not (self.done or self.block):
+            # self.screen.fill(BLACK)
+            actions = action(copy.deepcopy(self.map))
+            real_action_this_interval = 0
 
-    # Loop until the user clicks the close button.
-    done = False
-    block = False
-    # Used to manage how fast the screen updates
-    clock = pygame.time.Clock()
-    simulator_status = SimulatorStatus()
-    # -------- Main Program Loop -----------
-    while not (done or block):
-        # for event in pygame.event.get():  # User did something
-        #     if event.type == pygame.QUIT:  # If user clicked close
-        #         done = True  # Flag that we are done so we exit this loop
-        #     else:
-        #         break
-        #     # elif event.type == pygame.MOUSEBUTTONDOWN:
-        #     #     # User clicks the mouse. Get the position
-        #     #     pos = pygame.mouse.get_pos()
-        #     #     # Change the x/y screen coordinates to grid coordinates
-        #     #     column = pos[0] // (WIDTH + MARGIN)
-        #     #     row = pos[1] // (HEIGHT + MARGIN)
-        #     #     # Set that location to one
-        #     #     grid[row][column] = 4
-        #     #     print("Click ", pos, "Grid coordinates: ", row, column)
+            # set grid type
+            for i, robot_i in enumerate(self.map.robots):
+                self.map.grid[robot_i.x][robot_i.y] = EXPLORATED_AREA
 
-        # Set the screen background
-        screen.fill(BLACK)
-        actions = action(map)
-        real_action_this_interval = 0
+                real_action_this_interval += robot_i.move(self.map, action=actions[i])
+                self.map.grid[robot_i.x][robot_i.y] = ROBOT_AREA
 
-        for i, robot_i in enumerate(map.robots):
-            map.grid[robot_i.x][robot_i.y] = EXPLORATED_AREA
+            for robot_i in self.map.robots:
+                view_real_area_i = robot_i.view_real_area(self.map.blocks,
+                                                          self.map.grid_dimension)
+                for j in view_real_area_i:
+                    self.map.grid[j[0]][j[1]] = EXPLORATED_AREA
 
-            real_action_this_interval += robot_i.move(map, action=actions[i])
-            map.grid[robot_i.x][robot_i.y] = ROBOT_AREA
+            for robot_i in self.map.robots:
+                self.map.grid[robot_i.x][robot_i.y] = ROBOT_AREA
 
-        for robot_i in map.robots:
-            view_real_area_i = robot_i.view_real_area(map.blocks,
-                                                      map.grid_dimension)
-            for j in view_real_area_i:
-                map.grid[j[0]][j[1]] = EXPLORATED_AREA
+            self.map.view_real_exploration_bounds()
 
-        for robot_i in map.robots:
-            map.grid[robot_i.x][robot_i.y] = ROBOT_AREA
+            # Draw the grid
+            for row in range(GRID_DIMENSION[0]):
+                for column in range(GRID_DIMENSION[1]):
+                    color = GREY
+                    if self.map.grid[row][column] == ROBOT_AREA:
+                        color = RED
+                    elif self.map.grid[row][column] == BLOCK_AREA:
+                        color = BLACK
+                    elif self.map.grid[row][column] == EXPLORATED_AREA:
+                        color = WHITE
+                    elif self.map.grid[row][column] == EXPLORATED_BOUND:
+                        color = BLUE
+                    pygame.draw.rect(
+                        self.screen, color,
+                        [(MARGIN + WIDTH) * column + MARGIN,
+                         (MARGIN + HEIGHT) * row + MARGIN, WIDTH, HEIGHT])
 
-        map.view_real_exploration_bounds()
-        
+            # Limit to 60 frames per second
+            self.clock.tick(CLOCK_TICK)
 
-        # Draw the grid
-        for row in range(grid_dimension[0]):
-            for column in range(grid_dimension[1]):
-                color = GREY
-                if map.grid[row][column] == ROBOT_AREA:
-                    color = RED
-                elif map.grid[row][column] == BLOCK_AREA:
-                    color = BLACK
-                elif map.grid[row][column] == EXPLORATED_AREA:
-                    color = WHITE
-                elif map.grid[row][column] == EXPLORATED_BOUND:
-                    color = BLUE
-                pygame.draw.rect(
-                    screen, color,
-                    [(MARGIN + WIDTH) * column + MARGIN,
-                     (MARGIN + HEIGHT) * row + MARGIN, WIDTH, HEIGHT])
+            # Go ahead and update the screen with what we've drawn.
+            pygame.display.flip()
 
-        # Limit to 60 frames per second
-        clock.tick(CLOCK_TICK)
+            self.update_simulator_status(real_action_this_interval)
 
-        # Go ahead and update the screen with what we've drawn.
-        pygame.display.flip()
+    def load_elements(self, robot_init_filename, block_init_filename):  # replace init_map
+        for x, y in self.map.get_robot_init_place(robot_init_filename):
+            if not self.map.is_location_in_environment(x, y, GRID_DIMENSION):
+                raise OutsideBoundryError('init robot (x, y) not in map!')
+            self.map.grid[x][y] = ROBOT_AREA
+            self.map.robots.append(Robot(x, y))  # add robots
 
-        block, done = update_simulator_status(simulator_status, real_action_this_interval, map, filename, block, done)
+        for x, y in self.map.get_blocks_init_place(block_init_filename):
+            if not self.map.is_location_in_environment(x, y, GRID_DIMENSION):
+                raise OutsideBoundryError('init block (x, y) not in map!')
+            self.map.grid[x][y] = BLOCK_AREA
+            self.map.blocks.append((x, y))
 
-    # Be IDLE friendly. If you forget this line, the program will 'hang'
-    # on exit.
-    pygame.quit()
+    def update_simulator_status(self, real_action_this_interval):
+        self.simulator_status.update_time()
+        self.simulator_status.update_robot_route_length(real_action_this_interval)
+        self.simulator_status.update_area_info(self.map)
 
+        self.block = self.simulator_status.judge_blocking()
+        self.done = self.simulator_status.judge_over(self.map)
+        if self.done:
+            self.simulator_status.update_status("success")
+        if self.done or self.block:
+            self.simulator_status.save_log(self.result_filename)
+        print(self.simulator_status)  # for debug
 
-if __name__ == '__main__':
-    run_time = time.asctime().split()
-    filename = 'datas/' + ''.join(run_time).replace(":", "-") + '.csv'
-    with open(filename, "w+") as f:
-        f.write(
-            "run_time route_length status explorated_area unexplorated_area" +
-            "\n")
-    for i in range(RUN_TIMES):
-        robots_simulator(filename)
+    def gui_exit(self):
+        pygame.quit()
