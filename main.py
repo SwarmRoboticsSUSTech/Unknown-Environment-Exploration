@@ -17,7 +17,6 @@ if __name__ == '__main__':
     robots_simulator = Simulator(filename)
     for i in range(RUN_TIMES):
         robots_simulator.flush()
-        robots_simulator.load_elements("init_data/robot_init.csv", "init_data/blocks.csv")
         robots_simulator.loop()
     robots_simulator.gui_exit()
 

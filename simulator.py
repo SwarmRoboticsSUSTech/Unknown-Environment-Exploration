@@ -2,7 +2,7 @@ import pandas as pd
 import itertools
 
 from settings import *
-
+from exceptions import OutsideBoundryError
 
 class Robot:
     def __init__(self, x, y):
@@ -128,14 +128,6 @@ class Map:
             return False
         else:
             return True
-
-
-class OutsideBoundryError(Exception):
-    def __init__(self, value):
-        self.value = value
-
-    def __str__(self):
-        return (repr(self.value))
 
 
 class Frontier:
