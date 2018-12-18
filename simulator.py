@@ -4,6 +4,7 @@ import itertools
 from settings import *
 from exceptions import OutsideBoundryError
 
+
 class Robot:
     def __init__(self, x, y):
         self.x = x
@@ -144,13 +145,14 @@ class RobotLocation:
 
 
 class SimulatorStatus:
-    def __init__(self):
+    def __init__(self, cfg):
         self.time = 0
         self.robot_route_length = 0
         self.block_time = 0
         self.final_status = "run"
         self.explorated_area = 0
         self.unexplorated_area = 0
+        self.cfg = cfg
 
     def update_time(self):
         self.time += 1
@@ -181,10 +183,10 @@ class SimulatorStatus:
             return False
 
     def judge_blocking(self):
-        if self.block_time >= BLOCK_TIME:
+        if self.block_time >= int(self.cfg['TIME']['block_time']):
             self.final_status = "block"
             return True
-        elif self.time >= DIE_TIME:
+        elif self.time >= int(self.cfg['TIME']['die_time']):
             self.final_status = "block"
             return True
         else:

@@ -1,12 +1,14 @@
 # -*- coding: utf-8 -*-
 import time
+import configparser
 
 from run_simulator import Simulator
 from calculate import print_info
-from settings import *
-
 
 if __name__ == '__main__':
+    cfg = configparser.ConfigParser()
+    cfg.read('settings.ini')
+
     run_time = time.asctime().split()
     filename = 'datas/' + ''.join(run_time).replace(":", "-") + '.csv'
     with open(filename, "w+") as f:
@@ -14,8 +16,8 @@ if __name__ == '__main__':
             "run_time route_length status explorated_area unexplorated_area" +
             "\n")
 
-    robots_simulator = Simulator(filename)
-    for i in range(RUN_TIMES):
+    robots_simulator = Simulator(filename, cfg)
+    for i in range(int(cfg['TIME']['run_times'])):
         robots_simulator.flush()
         robots_simulator.loop()
     robots_simulator.gui_exit()
