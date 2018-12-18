@@ -22,4 +22,4 @@ if __name__ == '__main__':
         robots_simulator.loop()
     robots_simulator.gui_exit()
 
-    print_info(filename)
+    print_info(filename, gedit=True)
