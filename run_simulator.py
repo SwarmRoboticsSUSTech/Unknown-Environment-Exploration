@@ -1,152 +1,243 @@
-import time
+import copy
+import random
+import configparser
 
 import pygame
+import tkinter as tk
 
 from bso_astar import action
 from settings import *
-from simulator import map as simulator_map
-from simulator import OutsideBoundryError, SimulatorStatus, robot
+<<<<<<< HEAD
+
+=======
+from simulator import Map
+from simulator import SimulatorStatus, Robot
+from exceptions import OutsideBoundryError
+from gui import Application
 
 
-def init_map(map: simulator_map, robot_init_filename, block_init_filename):
-    for x, y in map.get_robot_init_place(robot_init_filename):
-        if not map.is_location_in_environment(x, y, grid_dimension):
-            raise OutsideBoundryError('init robot (x, y) not in map!')
-        map.grid[x][y] = ROBOT_AREA
-        map.robots.append(robot(x, y))  # add robots
+class Simulator(object):
+    def __init__(self, result_filename, robot_init_filename=None, block_init_filename=None):
+        self.result_filename = result_filename
 
-    for x, y in map.get_blocks_init_place(block_init_filename):
-        if not map.is_location_in_environment(x, y, grid_dimension):
-            raise OutsideBoundryError('init block (x, y) not in map!')
-        map.grid[x][y] = BLOCK_AREA
-        map.blocks.append((x, y))
+        self.configure()
 
+        self.init_backend()
 
-def update_simulator_status(simulator_status, real_action_this_interval, map, filename, block, done):
-    simulator_status.update_time()
-    simulator_status.update_robot_route_length(real_action_this_interval)
-    simulator_status.update_area_info(map)
+        self.init_map(robot_init_filename, block_init_filename)
 
-    block = simulator_status.judge_blocking()
-    done = simulator_status.judge_over(map)
-    if done:
-        simulator_status.update_status("success")
-    if done or block:
-        simulator_status.save_log(filename)
-    print(simulator_status)  # for debug
-    return block, done
+    def flush(self):
+        self.done = False
+        self.block = False
+        self.simulator_status = SimulatorStatus(self.cfg)
+        self.map = copy.deepcopy(self.origin_map)
 
+    def loop(self):
+        while not (self.done or self.block):
+            # self.screen.fill(BLACK)
+            actions = action(copy.deepcopy(self.map))  # 避免算法部分不小心修改了map的属性
+            real_action_this_interval = 0
 
-def robots_simulator(filename, display_simulator):
-    screen_height = grid_dimension[0] * WIDTH + grid_dimension[0] + 1
-    screen_width = grid_dimension[1] * HEIGHT + grid_dimension[1] + 1
+            # set grid type
+            for i, robot_i in enumerate(self.map.robots):
+                self.map.grid[robot_i.x][robot_i.y] = EXPLORATED_AREA
 
-    map = simulator_map(grid_dimension)
-    init_map(map, "init_data/robot_init.csv", "init_data/blocks.csv")
+                real_action_this_interval += robot_i.move(self.map, action=actions[i])
+                self.map.grid[robot_i.x][robot_i.y] = ROBOT_AREA
 
-    # Initialize pygame
-    if display_simulator == True:
-        pygame.init()
+            for robot_i in self.map.robots:
+                view_real_area_i = robot_i.view_real_area(self.map.blocks,
+                                                          self.map.grid_dimension)
+                for j in view_real_area_i:
+                    self.map.grid[j[0]][j[1]] = EXPLORATED_AREA
 
-    # Set the HEIGHT and WIDTH of the screen
-    WINDOW_SIZE = [screen_width, screen_height]
-    if display_simulator == True:
-        screen = pygame.display.set_mode(WINDOW_SIZE)
+            for robot_i in self.map.robots:
+                self.map.grid[robot_i.x][robot_i.y] = ROBOT_AREA
 
-    # Set title of screen
-    if display_simulator == True:
-        pygame.display.set_caption(
-            "Frontier-based Unknown Environment Exploration")
+            self.map.view_real_exploration_bounds()
 
-    # Loop until the user clicks the close button.
-    done = False
-    block = False
-    # Used to manage how fast the screen updates
-    if display_simulator == True:
-        clock = pygame.time.Clock()
-    simulator_status = SimulatorStatus()
-    # -------- Main Program Loop -----------
-    while not (done or block):
-        # for event in pygame.event.get():  # User did something
-        #     if event.type == pygame.QUIT:  # If user clicked close
-        #         done = True  # Flag that we are done so we exit this loop
-        #     else:
-        #         break
-        #     # elif event.type == pygame.MOUSEBUTTONDOWN:
-        #     #     # User clicks the mouse. Get the position
-        #     #     pos = pygame.mouse.get_pos()
-        #     #     # Change the x/y screen coordinates to grid coordinates
-        #     #     column = pos[0] // (WIDTH + MARGIN)
-        #     #     row = pos[1] // (HEIGHT + MARGIN)
-        #     #     # Set that location to one
-        #     #     grid[row][column] = 4
-        #     #     print("Click ", pos, "Grid coordinates: ", row, column)
-
-        # Set the screen background
-        if display_simulator == True:
-            screen.fill(BLACK)
-        actions = action(map)
-        real_action_this_interval = 0
-
-        for i, robot_i in enumerate(map.robots):
-            map.grid[robot_i.x][robot_i.y] = EXPLORATED_AREA
-
-            real_action_this_interval += robot_i.move(map, action=actions[i])
-            map.grid[robot_i.x][robot_i.y] = ROBOT_AREA
-
-        for robot_i in map.robots:
-            view_real_area_i = robot_i.view_real_area(map.blocks,
-                                                      map.grid_dimension)
-            for j in view_real_area_i:
-                map.grid[j[0]][j[1]] = EXPLORATED_AREA
-
-        for robot_i in map.robots:
-            map.grid[robot_i.x][robot_i.y] = ROBOT_AREA
-
-        map.view_real_exploration_bounds()
-
-        # Draw the grid
-        for row in range(grid_dimension[0]):
-            for column in range(grid_dimension[1]):
-                color = GREY
-                if map.grid[row][column] == ROBOT_AREA:
-                    color = RED
-                elif map.grid[row][column] == BLOCK_AREA:
-                    color = BLACK
-                elif map.grid[row][column] == EXPLORATED_AREA:
-                    color = WHITE
-                elif map.grid[row][column] == EXPLORATED_BOUND:
-                    color = BLUE
-                if display_simulator == True:
+            # Draw the grid
+            for row in range(int(self.cfg['MAP']['grid_row_dimension'])):
+                for column in range(int(self.cfg['MAP']['grid_column_dimension'])):
+                    color = GREY
+                    if self.map.grid[row][column] == ROBOT_AREA:
+                        color = RED
+                    elif self.map.grid[row][column] == BLOCK_AREA:
+                        color = BLACK
+                    elif self.map.grid[row][column] == EXPLORATED_AREA:
+                        color = WHITE
+                    elif self.map.grid[row][column] == EXPLORATED_BOUND:
+                        color = BLUE
                     pygame.draw.rect(
-                        screen, color,
-                        [(MARGIN + WIDTH) * column + MARGIN,
-                         (MARGIN + HEIGHT) * row + MARGIN, WIDTH, HEIGHT])
+                        self.screen, color,
+                        [(int(self.cfg['MAP']['margin']) + int(self.cfg['MAP']['width'])) * column + int(
+                            self.cfg['MAP']['margin']),
+                         (int(self.cfg['MAP']['margin']) + int(self.cfg['MAP']['height'])) * row + int(
+                             self.cfg['MAP']['margin']), int(self.cfg['MAP']['width']), int(self.cfg['MAP']['height'])])
 
-        # Limit to 60 frames per second
-        if display_simulator == True:
-            clock.tick(CLOCK_TICK)
+            # Limit to 60 frames per second
+            self.clock.tick(CLOCK_TICK)
 
-        # Go ahead and update the screen with what we've drawn.
-        if display_simulator == True:
+            # Go ahead and update the screen with what we've drawn.
             pygame.display.flip()
 
-        block, done = update_simulator_status(
-            simulator_status, real_action_this_interval, map, filename, block, done)
+            self.update_simulator_status(real_action_this_interval)
 
-    # Be IDLE friendly. If you forget this line, the program will 'hang'
-    # on exit.
-    if display_simulator == True:
+    def load_elements_from_file(self, robot_init_filename, block_init_filename):
+        map = Map((int(self.cfg['MAP']['grid_row_dimension']), int(self.cfg['MAP']['grid_column_dimension'])))
+        for x, y in map.get_blocks_init_place(block_init_filename):
+            if not map.is_location_in_environment(x, y, (
+            int(self.cfg['MAP']['grid_row_dimension']), int(self.cfg['MAP']['grid_column_dimension']))):
+                raise OutsideBoundryError('init block (x, y) not in map!')
+            map.grid[x][y] = BLOCK_AREA
+            map.blocks.append((x, y))
+
+        for x, y in map.get_robot_init_place(robot_init_filename):
+            if not map.is_location_in_environment(x, y, (
+            int(self.cfg['MAP']['grid_row_dimension']), int(self.cfg['MAP']['grid_column_dimension']))):
+                raise OutsideBoundryError('init robot (x, y) not in map!')
+            map.grid[x][y] = ROBOT_AREA
+            map.robots.append(Robot(x, y))  # add robots
+        return map
+
+    def load_elements_by_click(self, robots_sequences, blocks_sequences):
+        map = Map((int(self.cfg['MAP']['grid_row_dimension']), int(self.cfg['MAP']['grid_column_dimension'])))
+        for x, y in blocks_sequences:
+            if not map.is_location_in_environment(x, y, (
+            int(self.cfg['MAP']['grid_row_dimension']), int(self.cfg['MAP']['grid_column_dimension']))):
+                raise OutsideBoundryError('init block (x, y) not in map!')
+            map.grid[x][y] = BLOCK_AREA
+            map.blocks.append((x, y))
+
+        for x, y in robots_sequences:
+            if not map.is_location_in_environment(x, y, (
+            int(self.cfg['MAP']['grid_row_dimension']), int(self.cfg['MAP']['grid_column_dimension']))):
+                raise OutsideBoundryError('init robot (x, y) not in map!')
+            map.grid[x][y] = ROBOT_AREA
+            map.robots.append(Robot(x, y))  # add robots
+        return map
+
+    def load_elements_by_random(self):
+        map = Map((int(self.cfg['MAP']['grid_row_dimension']), int(self.cfg['MAP']['grid_column_dimension'])))
+        count = 0
+        while count <= int(self.cfg['MAP']['random_init_blocks_num']):
+            x = random.randint(0, int(self.cfg['MAP']['grid_row_dimension']) - 1)
+            y = random.randint(0, int(self.cfg['MAP']['grid_column_dimension']) - 1)
+            if (x, y) not in map.blocks:
+                count += 1
+                map.grid[x][y] = BLOCK_AREA
+                map.blocks.append((x, y))
+
+        count = 0
+        while count <= int(self.cfg['MAP']['random_init_robots_num']):
+            x = random.randint(0, int(self.cfg['MAP']['grid_row_dimension']) - 1)
+            y = random.randint(0, int(self.cfg['MAP']['grid_column_dimension']) - 1)
+            if (x, y) not in map.blocks:
+                count += 1
+                map.grid[x][y] = ROBOT_AREA
+                map.robots.append(Robot(x, y))  # add robots
+        return map
+
+    def update_simulator_status(self, real_action_this_interval):
+        self.simulator_status.update_time()
+        self.simulator_status.update_robot_route_length(real_action_this_interval)
+        self.simulator_status.update_area_info(self.map)
+
+        self.block = self.simulator_status.judge_blocking()
+        self.done = self.simulator_status.judge_over(self.map)
+        if self.done:
+            self.simulator_status.update_status("success")
+        if self.done or self.block:
+            self.simulator_status.save_log(self.result_filename)
+        print(self.simulator_status)  # for debug
+
+    def init_backend(self):
+        pygame.init()
+
+        screen_height = (int(self.cfg['MAP']['grid_row_dimension']) + 4) * (
+                    int(self.cfg['MAP']['width']) + int(self.cfg['MAP']['margin']))
+        screen_width = int(self.cfg['MAP']['grid_column_dimension']) * (
+                    int(self.cfg['MAP']['height']) + int(self.cfg['MAP']['margin']))
+        self.screen = pygame.display.set_mode([screen_width, screen_height])
+        self.screen.fill(GREEN)
+
+        pygame.display.set_caption(
+            "Frontier-based Unknown Environment Exploration")
+        self.clock = pygame.time.Clock()
+        for row in range(int(self.cfg['MAP']['grid_row_dimension'])):
+            for column in range(int(self.cfg['MAP']['grid_column_dimension'])):
+                pygame.draw.rect(
+                    self.screen, GREY,
+                    [(int(self.cfg['MAP']['margin']) + int(self.cfg['MAP']['width'])) * column + int(
+                        self.cfg['MAP']['margin']),
+                     (int(self.cfg['MAP']['margin']) + int(self.cfg['MAP']['height'])) * row + int(
+                         self.cfg['MAP']['margin']), int(self.cfg['MAP']['width']), int(self.cfg['MAP']['height'])])
+
+    def configure(self):
+        root = tk.Tk()
+        app = Application(master=root)
+        app.mainloop()
+
+        self.cfg = configparser.ConfigParser()
+        self.cfg.read('settings.ini')
+        self.mode = self.cfg['MODE']['mode']
+
+    def init_map(self, robot_init_filename, block_init_filename):
+        if self.mode == 'SELECTION':
+            click_squences = {}
+            selecting = True
+            while selecting:
+                self.clock.tick(60)
+
+                for event in pygame.event.get():
+                    if event.type == pygame.MOUSEBUTTONUP:
+                        click_pos = event.pos
+                        column = int((click_pos[0] - int(self.cfg['MAP']['margin'])) / (
+                                    int(self.cfg['MAP']['margin']) + int(self.cfg['MAP']['width'])))
+                        row = int((click_pos[1] - int(self.cfg['MAP']['margin'])) / (
+                                    int(self.cfg['MAP']['margin']) + int(self.cfg['MAP']['height'])))
+                        if 0 <= column < int(self.cfg['MAP']['grid_column_dimension']) and 0 <= row < int(
+                                self.cfg['MAP']['grid_row_dimension']):
+                            if event.button == LEFT_CLICK:
+                                click_squences[(row, column)] = 'ROBOT'
+                                pygame.draw.rect(
+                                    self.screen, RED,
+                                    [(int(self.cfg['MAP']['margin']) + int(self.cfg['MAP']['width'])) * column + int(
+                                        self.cfg['MAP']['margin']),
+                                     (int(self.cfg['MAP']['margin']) + int(self.cfg['MAP']['height'])) * row + int(
+                                         self.cfg['MAP']['margin']), int(self.cfg['MAP']['width']),
+                                     int(self.cfg['MAP']['height'])])
+                            elif event.button == RIGHT_CLICK:
+                                click_squences[(row, column)] = 'BLOCK'
+                                pygame.draw.rect(
+                                    self.screen, BLACK,
+                                    [(int(self.cfg['MAP']['margin']) + int(self.cfg['MAP']['width'])) * column + int(
+                                        self.cfg['MAP']['margin']),
+                                     (int(self.cfg['MAP']['margin']) + int(self.cfg['MAP']['height'])) * row + int(
+                                         self.cfg['MAP']['margin']), int(self.cfg['MAP']['width']),
+                                     int(self.cfg['MAP']['height'])])
+
+                    elif event.type == pygame.QUIT:
+                        selecting = False
+
+                pygame.display.update()
+
+            robots_sequences = []
+            blocks_sequences = []
+            for k, v in click_squences.items():
+                if v == 'ROBOT':
+                    robots_sequences.append(k)
+                elif v == 'BLOCK':
+                    blocks_sequences.append(k)
+
+            self.origin_map = self.load_elements_by_click(robots_sequences, blocks_sequences)
+
+        elif self.mode == 'READFILE':
+            self.origin_map = self.load_elements_from_file(robot_init_filename, block_init_filename)
+
+        elif self.mode == 'RANDOM_INIT':
+            self.origin_map = self.load_elements_by_random()
+
+    def gui_exit(self):
         pygame.quit()
-
-
-if __name__ == '__main__':
-    run_time = time.asctime().split()
-    filename = 'datas/' + ''.join(run_time).replace(":", "-") + '.csv'
-    with open(filename, "w+") as f:
-        f.write(
-            "run_time route_length status explorated_area unexplorated_area" +
-            "\n")
-    display_simulator = True
-    for i in range(RUN_TIMES):
-        robots_simulator(filename, display_simulator)
+>>>>>>> bf04d406f83669c3fb4ab09ce311a08cd8c32630

@@ -2,9 +2,10 @@ import pandas as pd
 import itertools
 
 from settings import *
+from exceptions import OutsideBoundryError
 
 
-class robot:
+class Robot:
     def __init__(self, x, y):
         self.x = x
         self.y = y
@@ -14,20 +15,20 @@ class robot:
     def move(
             self,
             map,
-            action=0,
+            action=KEEP_STILL,
     ):
-        if action == 0:
+        if action == KEEP_STILL:
             pass
-        elif action == 1:  # left
+        elif action == MOVE_LEFT:
             self.y -= 1
-        elif action == 2:  # down
+        elif action == MOVE_DOWN:
             self.x += 1
-        elif action == 3:  # right
+        elif action == MOVE_RIGHT:
             self.y += 1
-        elif action == 4:  # up
+        elif action == MOVE_UP:
             self.x -= 1
 
-        if robot.judge_valid_loaction(self.x, self.y, map.blocks,
+        if Robot.judge_valid_loaction(self.x, self.y, map.blocks,
                                       map.grid_dimension):
             self.previous_x = self.x
             self.previous_y = self.y
@@ -42,7 +43,7 @@ class robot:
         if (x, y) in blocks:
             return False
         else:
-            return map.is_location_in_environment(x, y, grid_dimension)
+            return Map.is_location_in_environment(x, y, grid_dimension)
 
     @staticmethod
     def view_raw_area(x, y):
@@ -52,7 +53,7 @@ class robot:
 
     def view_real_area(self, blocks, grid_dimension):
         # So silly.
-        raw_area = set(robot.view_raw_area(self.x, self.y))
+        raw_area = set(Robot.view_raw_area(self.x, self.y))
 
         # Avoid view area cross blocks
         if (self.x + 1, self.y) in blocks:
@@ -66,12 +67,12 @@ class robot:
         raw_area_without_blocks = raw_area.difference(set(blocks))
         real_area = [
             i for i in raw_area_without_blocks
-            if map.is_location_in_environment(i[0], i[1], grid_dimension)
+            if Map.is_location_in_environment(i[0], i[1], grid_dimension)
         ]
         return real_area
 
 
-class map:
+class Map:
     def __init__(self, grid_dimension):
         self.grid_dimension = grid_dimension
         self.grid = [[0 for x in range(grid_dimension[1])]
@@ -130,41 +131,43 @@ class map:
             return True
 
 
+<<<<<<< HEAD
 class OutsideBoundryError(Exception):
     def __init__(self, value):
         self.value = value
 
     def __str__(self):
         return (repr(self.value))
-
-
-class frontier:
-    def __init__(self, row, column, weight, direction):
+=======
+class Frontier:
+    def __init__(self, row, column, weight):
+>>>>>>> bf04d406f83669c3fb4ab09ce311a08cd8c32630
         self.weight = weight
         self.direction = direction
         self.x = row
         self.y = column
 
 
-class robotlocation:
+class RobotLocation:
     def __init__(self, row, column):
         self.x = row
         self.y = column
 
 
 class SimulatorStatus:
-    def __init__(self):
+    def __init__(self, cfg):
         self.time = 0
         self.robot_route_length = 0
         self.block_time = 0
         self.final_status = "run"
         self.explorated_area = 0
         self.unexplorated_area = 0
+        self.cfg = cfg
 
     def update_time(self):
         self.time += 1
 
-    def update_area_info(self, map: map):
+    def update_area_info(self, map: Map):
         one_dimension_map = list(itertools.chain(*map.grid))
         self.explorated_area = one_dimension_map.count(3)
         self.unexplorated_area = one_dimension_map.count(
@@ -181,7 +184,7 @@ class SimulatorStatus:
         self.final_status = status
 
     @staticmethod
-    def judge_over(map: map):
+    def judge_over(map: Map):
         one_dimension_map = list(itertools.chain(*map.grid))
         # print(one_dimension_map)
         if UNEXPLARATION_AREA not in one_dimension_map and EXPLORATED_BOUND not in one_dimension_map:
@@ -190,10 +193,10 @@ class SimulatorStatus:
             return False
 
     def judge_blocking(self):
-        if self.block_time >= BLOCK_TIME:
+        if self.block_time >= int(self.cfg['TIME']['block_time']):
             self.final_status = "block"
             return True
-        elif self.time >= DIE_TIME:
+        elif self.time >= int(self.cfg['TIME']['die_time']):
             self.final_status = "block"
             return True
         else:
@@ -202,8 +205,8 @@ class SimulatorStatus:
     def __repr__(self):
         return "run time is " + str(
             self.time) + " " + "robots total route length is " + str(
-                self.robot_route_length
-            ) + " " + "status is " + self.final_status
+            self.robot_route_length
+        ) + " " + "status is " + self.final_status
 
     def save_log(self, filename):
         with open(filename, "a") as f:
