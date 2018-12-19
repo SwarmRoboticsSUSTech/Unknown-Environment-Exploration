@@ -2,13 +2,13 @@ import time
 
 import pygame
 
-from algorithm import action
+from bso_astar import action
 from settings import *
 from simulator import map as simulator_map
 from simulator import OutsideBoundryError, SimulatorStatus, robot
 
 
-def init_map(map:simulator_map, robot_init_filename, block_init_filename):
+def init_map(map: simulator_map, robot_init_filename, block_init_filename):
     for x, y in map.get_robot_init_place(robot_init_filename):
         if not map.is_location_in_environment(x, y, grid_dimension):
             raise OutsideBoundryError('init robot (x, y) not in map!')
@@ -20,6 +20,7 @@ def init_map(map:simulator_map, robot_init_filename, block_init_filename):
             raise OutsideBoundryError('init block (x, y) not in map!')
         map.grid[x][y] = BLOCK_AREA
         map.blocks.append((x, y))
+
 
 def update_simulator_status(simulator_status, real_action_this_interval, map, filename, block, done):
     simulator_status.update_time()
@@ -36,29 +37,33 @@ def update_simulator_status(simulator_status, real_action_this_interval, map, fi
     return block, done
 
 
-def robots_simulator(filename):
+def robots_simulator(filename, display_simulator):
     screen_height = grid_dimension[0] * WIDTH + grid_dimension[0] + 1
     screen_width = grid_dimension[1] * HEIGHT + grid_dimension[1] + 1
 
     map = simulator_map(grid_dimension)
     init_map(map, "init_data/robot_init.csv", "init_data/blocks.csv")
-    
+
     # Initialize pygame
-    pygame.init()
+    if display_simulator == True:
+        pygame.init()
 
     # Set the HEIGHT and WIDTH of the screen
     WINDOW_SIZE = [screen_width, screen_height]
-    screen = pygame.display.set_mode(WINDOW_SIZE)
+    if display_simulator == True:
+        screen = pygame.display.set_mode(WINDOW_SIZE)
 
     # Set title of screen
-    pygame.display.set_caption(
-        "Frontier-based Unknown Environment Exploration")
+    if display_simulator == True:
+        pygame.display.set_caption(
+            "Frontier-based Unknown Environment Exploration")
 
     # Loop until the user clicks the close button.
     done = False
     block = False
     # Used to manage how fast the screen updates
-    clock = pygame.time.Clock()
+    if display_simulator == True:
+        clock = pygame.time.Clock()
     simulator_status = SimulatorStatus()
     # -------- Main Program Loop -----------
     while not (done or block):
@@ -78,7 +83,8 @@ def robots_simulator(filename):
         #     #     print("Click ", pos, "Grid coordinates: ", row, column)
 
         # Set the screen background
-        screen.fill(BLACK)
+        if display_simulator == True:
+            screen.fill(BLACK)
         actions = action(map)
         real_action_this_interval = 0
 
@@ -98,7 +104,6 @@ def robots_simulator(filename):
             map.grid[robot_i.x][robot_i.y] = ROBOT_AREA
 
         map.view_real_exploration_bounds()
-        
 
         # Draw the grid
         for row in range(grid_dimension[0]):
@@ -112,22 +117,27 @@ def robots_simulator(filename):
                     color = WHITE
                 elif map.grid[row][column] == EXPLORATED_BOUND:
                     color = BLUE
-                pygame.draw.rect(
-                    screen, color,
-                    [(MARGIN + WIDTH) * column + MARGIN,
-                     (MARGIN + HEIGHT) * row + MARGIN, WIDTH, HEIGHT])
+                if display_simulator == True:
+                    pygame.draw.rect(
+                        screen, color,
+                        [(MARGIN + WIDTH) * column + MARGIN,
+                         (MARGIN + HEIGHT) * row + MARGIN, WIDTH, HEIGHT])
 
         # Limit to 60 frames per second
-        clock.tick(CLOCK_TICK)
+        if display_simulator == True:
+            clock.tick(CLOCK_TICK)
 
         # Go ahead and update the screen with what we've drawn.
-        pygame.display.flip()
+        if display_simulator == True:
+            pygame.display.flip()
 
-        block, done = update_simulator_status(simulator_status, real_action_this_interval, map, filename, block, done)
+        block, done = update_simulator_status(
+            simulator_status, real_action_this_interval, map, filename, block, done)
 
     # Be IDLE friendly. If you forget this line, the program will 'hang'
     # on exit.
-    pygame.quit()
+    if display_simulator == True:
+        pygame.quit()
 
 
 if __name__ == '__main__':
@@ -137,5 +147,6 @@ if __name__ == '__main__':
         f.write(
             "run_time route_length status explorated_area unexplorated_area" +
             "\n")
+    display_simulator = True
     for i in range(RUN_TIMES):
-        robots_simulator(filename)
+        robots_simulator(filename, display_simulator)

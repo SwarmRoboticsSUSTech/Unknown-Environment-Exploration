@@ -22,7 +22,7 @@ grid_dimension = (20, 40)
 
 CLOCK_TICK = 50
 
-BLOCK_TIME = 50
+BLOCK_TIME = 10
 DIE_TIME = 1000
 
-RUN_TIMES = 2
+RUN_TIMES = 100

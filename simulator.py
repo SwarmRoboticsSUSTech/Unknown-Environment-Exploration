@@ -139,8 +139,9 @@ class OutsideBoundryError(Exception):
 
 
 class frontier:
-    def __init__(self, row, column, weight):
+    def __init__(self, row, column, weight, direction):
         self.weight = weight
+        self.direction = direction
         self.x = row
         self.y = column
 

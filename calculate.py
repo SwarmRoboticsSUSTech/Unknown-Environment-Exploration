@@ -8,15 +8,25 @@ def print_info():
     df = pd.read_csv(filename, delim_whitespace=True)
     success_df = df.loc[df['status'] == "success"]
     print("Success statistics information")
+    print("MEAN")
     print(success_df[[
         "run_time", "route_length", "explorated_area", "unexplorated_area"
     ]].mean())
+    print("STANDARD")
+    print(success_df[[
+        "run_time", "route_length", "explorated_area", "unexplorated_area"
+    ]].std())
 
     block_df = df.loc[df['status'] == "block"]
     print("Block statistics information")
+    print("MEAN")
     print(block_df[[
         "run_time", "route_length", "explorated_area", "unexplorated_area"
     ]].mean())
+    print("STANDARD")
+    print(block_df[[
+        "run_time", "route_length", "explorated_area", "unexplorated_area"
+    ]].std())
 
     print("Total run " + str(len(df)) + " rounds")
     print("Success " + str(len(success_df)) + " rounds " + str(
