@@ -5,8 +5,8 @@ import configparser
 import pygame
 import tkinter as tk
 
-from bso_astar import action
-# from bso import action
+# from bso_astar import action
+from bso import action
 from settings import *
 from simulator import Map
 from simulator import SimulatorStatus, Robot
@@ -152,7 +152,7 @@ class Simulator(object):
     def init_backend(self):
         pygame.init()
 
-        screen_height = (int(self.cfg['MAP']['grid_row_dimension']) + 4) * (
+        screen_height = int(self.cfg['MAP']['grid_row_dimension']) * (
                     int(self.cfg['MAP']['width']) + int(self.cfg['MAP']['margin']))
         screen_width = int(self.cfg['MAP']['grid_column_dimension']) * (
                     int(self.cfg['MAP']['height']) + int(self.cfg['MAP']['margin']))
@@ -173,6 +173,7 @@ class Simulator(object):
 
     def configure(self):
         root = tk.Tk()
+        root.geometry("500x500")
         app = Application(master=root)
         app.mainloop()
 

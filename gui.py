@@ -21,13 +21,13 @@ class Application(Frame):
     def createWidgets(self):
         v = IntVar()
         v.set(1)
-        self.checkbutton_selection = Radiobutton(self, text='selection', value=1, variable=v,
+        self.checkbutton_selection = Radiobutton(self, text='selection', font=('Monaco', 20), value=1, variable=v,
                                                  command=self.choose_selection_mode)
         self.checkbutton_selection.pack()
-        self.checkbutton_random_init = Radiobutton(self, text='random init', value=2, variable=v,
+        self.checkbutton_random_init = Radiobutton(self, text='random init', font=('Monaco', 20), value=2, variable=v,
                                                    command=self.choose_random_init_mode)
         self.checkbutton_random_init.pack()
-        self.checkbutton_readfile = Radiobutton(self, text='read file', value=3, variable=v,
+        self.checkbutton_readfile = Radiobutton(self, text='read file', font=('Monaco', 20), value=3, variable=v,
                                                 command=self.choose_readfile_mode)
         self.checkbutton_readfile.pack()
 
@@ -49,5 +49,6 @@ class Application(Frame):
 
 if __name__ == '__main__':
     root = tk.Tk()
+    root.geometry("500x500")
     app = Application(master=root)
     app.mainloop()
