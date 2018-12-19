@@ -6,10 +6,8 @@ import pygame
 import tkinter as tk
 
 from bso_astar import action
+# from bso import action
 from settings import *
-<<<<<<< HEAD
-
-=======
 from simulator import Map
 from simulator import SimulatorStatus, Robot
 from exceptions import OutsideBoundryError
@@ -240,4 +238,3 @@ class Simulator(object):
 
     def gui_exit(self):
         pygame.quit()
->>>>>>> bf04d406f83669c3fb4ab09ce311a08cd8c32630

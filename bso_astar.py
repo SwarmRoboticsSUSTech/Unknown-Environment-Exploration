@@ -3,8 +3,8 @@ import math
 import numpy as np
 
 from settings import *
-from simulator import map as map_object
-from simulator import robotlocation, frontier, robot
+from simulator import Map as map_object
+from simulator import RobotLocation, Frontier, Robot
 from distance_calculator import astar_distance
 
 
@@ -51,7 +51,7 @@ def getRobotLocation(map):
     robotLocations = []
     for i in range(len(map.robots)):
         robot = map.robots[i]
-        robot_location = robotlocation(robot.x, robot.y)
+        robot_location = RobotLocation(robot.x, robot.y)
         robotLocations.append(robot_location)
     return robotLocations
 
@@ -61,7 +61,7 @@ def findFrontiers(map_grid_matrix, robotlocation):
     for x in range(len(map_grid_matrix)):
         for y in range(len(map_grid_matrix[0])):
             if map_grid_matrix[x][y] == EXPLORATED_BOUND:
-                m_frontier = frontier(x, y, eichilide_distance(
+                m_frontier = Frontier(x, y, eichilide_distance(
                     map_grid_matrix, x, y, robotlocation), [robotlocation.x, robotlocation.y])
                 frontiers.append(m_frontier)
     # print("frontiers:", len(frontiers))
@@ -220,13 +220,13 @@ def resampling(frontiers, total_weight):
 
 def pick_from_two_cluster(frontier_W_1, frontier_W_2, robotlocation_W):
     reject_distance = 5
-    indi_temp_R = frontier(0, 0, 0, [0, 0])
+    indi_temp_R = Frontier(0, 0, 0, [0, 0])
     # print("frontier_W_1:", frontier_W_1.x, frontier_W_1.y)
     # print("frontier_W_2:", frontier_W_2.x, frontier_W_2.y)
-    frontier_R_1 = frontier(0, 0, 0, [0, 0])
+    frontier_R_1 = Frontier(0, 0, 0, [0, 0])
     frontier_R_1.x = frontier_W_1.x - robotlocation_W.x
     frontier_R_1.y = frontier_W_1.y - robotlocation_W.y
-    frontier_R_2 = frontier(0, 0, 0, [0, 0])
+    frontier_R_2 = Frontier(0, 0, 0, [0, 0])
     frontier_R_2.x = frontier_W_2.x - robotlocation_W.x
     frontier_R_2.y = frontier_W_2.y - robotlocation_W.y
     # print("frontier_R_1:", frontier_R_1.x, frontier_R_1.y)
@@ -248,7 +248,7 @@ def pick_from_two_cluster(frontier_W_1, frontier_W_2, robotlocation_W):
         indi_temp_R.x = frontier_R_1.x
         indi_temp_R.y = frontier_R_1.y
     # print("indi_temp_R:", indi_temp_R.x, indi_temp_R.y)
-    indi_temp_W = frontier(0, 0, 0, [0, 0])
+    indi_temp_W = Frontier(0, 0, 0, [0, 0])
     indi_temp_W.x = indi_temp_R.x + robotlocation_W.x
     indi_temp_W.y = indi_temp_R.y + robotlocation_W.y
     # print("indi_temp_W:", indi_temp_W.x, indi_temp_W.y)

@@ -131,17 +131,17 @@ class Map:
             return True
 
 
-<<<<<<< HEAD
+
 class OutsideBoundryError(Exception):
     def __init__(self, value):
         self.value = value
 
     def __str__(self):
         return (repr(self.value))
-=======
+
+
 class Frontier:
-    def __init__(self, row, column, weight):
->>>>>>> bf04d406f83669c3fb4ab09ce311a08cd8c32630
+    def __init__(self, row, column, weight, direction=None):
         self.weight = weight
         self.direction = direction
         self.x = row

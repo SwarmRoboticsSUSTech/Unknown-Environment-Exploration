@@ -3,42 +3,40 @@ import sys
 
 
 def print_info(filename, gedit=False):
-    # filename = sys.argv[1]
     df = pd.read_csv(filename, delim_whitespace=True)
     success_df = df.loc[df['status'] == "success"]
-<<<<<<< HEAD
-    print("Success statistics information")
-    print("MEAN")
-    print(success_df[[
-        "run_time", "route_length", "explorated_area", "unexplorated_area"
-    ]].mean())
-    print("STANDARD")
-    print(success_df[[
-        "run_time", "route_length", "explorated_area", "unexplorated_area"
-    ]].std())
-
-    block_df = df.loc[df['status'] == "block"]
-    print("Block statistics information")
-    print("MEAN")
-    print(block_df[[
-        "run_time", "route_length", "explorated_area", "unexplorated_area"
-    ]].mean())
-    print("STANDARD")
-    print(block_df[[
-        "run_time", "route_length", "explorated_area", "unexplorated_area"
-    ]].std())
-=======
     print("Success statistics information", file=open(filename, "a"))
+    print("MEAN", file=open(filename, "a"))
     print(success_df[[
         "run_time", "route_length", "explorated_area", "unexplorated_area"
     ]].mean(), file=open(filename, "a"))
-
+    print("STANDARD", file=open(filename, "a"))
+    print(success_df[[
+        "run_time", "route_length", "explorated_area", "unexplorated_area"
+    ]].std(), file=open(filename, "a"))
+    
     block_df = df.loc[df['status'] == "block"]
     print("Block statistics information", file=open(filename, "a"))
+    print("MEAN", file=open(filename, "a"))
     print(block_df[[
         "run_time", "route_length", "explorated_area", "unexplorated_area"
     ]].mean(), file=open(filename, "a"))
->>>>>>> bf04d406f83669c3fb4ab09ce311a08cd8c32630
+    print("STANDARD", file=open(filename, "a"))
+    print(block_df[[
+        "run_time", "route_length", "explorated_area", "unexplorated_area"
+    ]].std(), file=open(filename, "a"))
+    #
+    # print("Success statistics information", file=open(filename, "a"))
+    # print(success_df[[
+    #     "run_time", "route_length", "explorated_area", "unexplorated_area"
+    # ]].mean(), file=open(filename, "a"))
+
+    # block_df = df.loc[df['status'] == "block"]
+    # print("Block statistics information", file=open(filename, "a"))
+    # print(block_df[[
+    #     "run_time", "route_length", "explorated_area", "unexplorated_area"
+    # ]].mean(), file=open(filename, "a"))
+
 
     print("Total run " + str(len(df)) + " rounds", file=open(filename, "a"))
     print("Success " + str(len(success_df)) + " rounds " + str(
