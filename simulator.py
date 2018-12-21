@@ -27,6 +27,19 @@ class Robot:
             self.y += 1
         elif action == MOVE_UP:
             self.x -= 1
+        elif action == MOVE_LEFT_UP:
+            self.y -= 1
+            self.x -= 1
+        elif action == MOVE_RIGHT_UP:
+            self.y += 1
+            self.x -= 1
+        elif action == MOVE_LEFT_DOWN:
+            self.y -= 1
+            self.x += 1
+        elif action == MOVE_RIGHT_DOWN:
+            self.y += 1
+            self.x += 1
+
 
         if Robot.judge_valid_loaction(self.x, self.y, map.blocks,
                                       map.grid_dimension):
