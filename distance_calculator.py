@@ -23,6 +23,7 @@ def reconstruct_path(came_from, current):
 
 # astar function returns a list of points (shortest path)
 def astar(array, start, goal):
+    debug_array = numpy.array(array)
 
     # 8个方向 (1, 1),(1, -1), (-1, 1), (-1, -1)
     directions = [(0, 1), (0, -1), (1, 0), (-1, 0)]
@@ -33,12 +34,20 @@ def astar(array, start, goal):
     fscore = {start: heuristic_cost_estimate(start, goal)}
 
     openSet = []
-    heappush(openSet, (fscore[start], start))   # 往堆中插入一条新的值
+    openSet.append((fscore[start], start))  # 往堆中插入一条新的值
 
     # while openSet is not empty
     while openSet:
+        # debug_array = numpy.array(array)
+        # for i in range(len(openSet)):
+        #     debug_array[openSet[i][1]] = fscore[openSet[i][1]]
+        #     print(openSet[i][1], fscore[openSet[i][1]])
+        # print(debug_array)
+
         # current := the node in openSet having the lowest fScore value
-        current = heappop(openSet)[1]   # 从堆中弹出fscore最小的节点
+        current = openSet.pop()[1]
+        # print(current)
+        # print("\n")
 
         if current == goal:
             return reconstruct_path(came_from, current)
@@ -70,16 +79,24 @@ def astar(array, start, goal):
 
             # Discover a new node
             if neighbor not in [i[1] for i in openSet]:
-                heappush(openSet, (fscore.get(neighbor, numpy.inf), neighbor))
-            # This is not a better path.
-            elif tentative_gScore >= gscore.get(neighbor, numpy.inf):
-                continue
-
-            # This path is the best until now. Record it!
-            came_from[neighbor] = current
-            gscore[neighbor] = tentative_gScore
-            fscore[neighbor] = tentative_gScore + \
-                heuristic_cost_estimate(neighbor, goal)
+                came_from[neighbor] = current
+                gscore[neighbor] = tentative_gScore
+                fscore[neighbor] = tentative_gScore + heuristic_cost_estimate(neighbor, goal)
+                openSet.append((fscore.get(neighbor, numpy.inf), neighbor))
+                # print("openSet sort before:", openSet)
+                openSet.sort(key=lambda x:x[0], reverse=True)
+                # print("openSet sort after:", openSet)
+            elif tentative_gScore < gscore.get(neighbor, numpy.inf):
+                # This path is the best until now. Record it!
+                openSet.remove((fscore.get(neighbor, numpy.inf), neighbor))
+                came_from[neighbor] = current
+                gscore[neighbor] = tentative_gScore
+                fscore[neighbor] = tentative_gScore + heuristic_cost_estimate(neighbor, goal)
+                openSet.append((fscore.get(neighbor, numpy.inf), neighbor))
+                openSet.sort(key=lambda x:x[0], reverse=True)
+            
+            # debug_array[neighbor[0]][neighbor[1]] = 6
+            # print(debug_array)
 
     return False
 
@@ -92,6 +109,10 @@ def astar(array, start, goal):
 def astar_distance(map_array, start, goal):
     path = astar(map_array, start, goal)
     if(path != False):
+        # for i in range(len(path)):
+        #     map_array[path[i]] = 100
+        # print(map_array)
+        
         # reture the lenght of this path and the next position expected to move
         return len(path), path[-2]
 
@@ -99,20 +120,42 @@ def astar_distance(map_array, start, goal):
 
 
 if __name__ == "__main__":
-    nmap = numpy.array([
-        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-        [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1],
-        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-        [1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
-        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-        [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1],
-        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-        [1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
-        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-        [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1],
-        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]])
+    # nmap = numpy.array([
+    #     [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    #     [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    #     [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    #     [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    #     [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    #     [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    #     [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    #     [1, 0, 1, 1, 1, 1, 1, 0, 0, 0, 1, 1, 1, 1],
+    #     [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    #     [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1],
+    #     [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]])
 
-    path = astar(nmap, (0, 0), (10, 13))
+    nmap = numpy.array([
+        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1],
+        [0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+        [0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 1, 1, 1, 1, 1],
+        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 1, 1, 1, 1],
+        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]])
+
+    path = astar(nmap, (4, 11), (5, 2))
     print(path[-2])
 
     for i in range(len(path)):

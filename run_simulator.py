@@ -5,8 +5,8 @@ import configparser
 import pygame
 import tkinter as tk
 
-# from bso_astar import action
-from bso import action
+from bso_astar import action
+# from bso import action
 from settings import *
 from simulator import Map
 from simulator import SimulatorStatus, Robot
@@ -172,10 +172,10 @@ class Simulator(object):
                          self.cfg['MAP']['margin']), int(self.cfg['MAP']['width']), int(self.cfg['MAP']['height'])])
 
     def configure(self):
-        root = tk.Tk()
-        root.geometry("500x500")
-        app = Application(master=root)
-        app.mainloop()
+        # root = tk.Tk()
+        # root.geometry("500x500")
+        # app = Application(master=root)
+        # app.mainloop()
 
         self.cfg = configparser.ConfigParser()
         self.cfg.read('settings.ini')

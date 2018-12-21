@@ -16,7 +16,7 @@ if __name__ == '__main__':
             "run_time route_length status explorated_area unexplorated_area" +
             "\n")
 
-    robots_simulator = Simulator(filename, cfg)
+    robots_simulator = Simulator(filename, "init_data/robot_init.csv", "init_data/blocks.csv")
     for i in range(int(cfg['TIME']['run_times'])):
         robots_simulator.flush()
         robots_simulator.loop()

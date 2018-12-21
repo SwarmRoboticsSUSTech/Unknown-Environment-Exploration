@@ -71,7 +71,7 @@ def findFrontiers(map_grid_matrix, robotlocation):
 
 
 def frontierFilter(frontiers):
-    lenghtoffrotiers = 8
+    lenghtoffrotiers = 3
     newfrontiers = []
     if len(frontiers) >= lenghtoffrotiers:
         # remove 20% of the frontiers randomly
@@ -118,24 +118,26 @@ def calculate_allfrontiers(map_grid_matrix, allFrontiers, robotLocations):
     total_weights = []
 
     for i in range(len(allFrontiers)):
+        print("robot:", i)
         frontiers = allFrontiers[i]
         frontiers_sorted = []
         robotlocation = robotLocations[i]
 
         # sort the frontiers with the astar distance
         frontiers_sorted.append(frontiers[0])
-        [frontiers_sorted[0].weight, frontiers_sorted[0].dircetion] = calculate_distance(
+        [frontiers_sorted[0].weight, frontiers_sorted[0].direction] = calculate_distance(
             map_grid_matrix, frontiers_sorted[0].x, frontiers_sorted[0].y, robotlocation)
         total_weight = frontiers_sorted[0].weight
         for j in range(1, len(frontiers)):
             temd_frontier = frontiers[j]
-            [temd_frontier.weight, temd_frontier.dircetion] = calculate_distance(
+            [temd_frontier.weight, temd_frontier.direction] = calculate_distance(
                 map_grid_matrix, temd_frontier.x, temd_frontier.y, robotlocation)
+            print("temd_frontier.direction:", temd_frontier.direction)
             index = len(frontiers_sorted) - 1
             for z in range(len(frontiers_sorted)):
                 if frontiers_sorted[index - z].weight > temd_frontier.weight:
                     break
-            
+
             frontiers_sorted.insert(index - 1, temd_frontier)
             total_weight += frontiers_sorted[index - 1].weight
 
@@ -147,7 +149,7 @@ def calculate_allfrontiers(map_grid_matrix, allFrontiers, robotLocations):
 
 
 def update_individuals_by_BSO(robot_amount, robotIndex, frontiers_1, allFrontiers_sorted, map_grid_matrix, robotlocation, centerfrontiers, total_weights):
-    prob_one_cluster = 0.5  # 0.8
+    prob_one_cluster = 0.9  # 0.8
     frontiers_sorted_1 = allFrontiers_sorted[robotIndex]
     # print("robotIndex", robotIndex)
 
@@ -174,30 +176,30 @@ def update_individuals_by_BSO(robot_amount, robotIndex, frontiers_1, allFrontier
             if(frontiers_1[i].weight < indi_temp.weight):
                 frontiers_1[i] = indi_temp
 
-        # update throught other cluster
-        else:
-            # sclect another cluster randemly
-            cluster_2 = robotIndex
-            while cluster_2 != robotIndex:
-                cluster_2 = math.ceil(random.random() * (robot_amount - 1))
-            # print("cluster_2:", cluster_2)
-            frontiers_sorted_2 = allFrontiers_sorted[cluster_2]
-            # math.ceil(random.random() * (len(frontiers_2)-1))
-            indi_2 = resampling(frontiers_sorted_2, total_weights[cluster_2])
-            # math.ceil(random.random() * (len(frontiers)-1))
-            indi_1 = resampling(frontiers_sorted_1, total_weights[robotIndex])
-            if random.random() < 0.5:
-                indi_temp = pick_from_two_cluster(
-                    centerfrontiers[robotIndex], centerfrontiers[cluster_2], robotlocation)     # TODO this function need to be altered
-            else:
-                indi_temp = pick_from_two_cluster(
-                    frontiers_sorted_1[indi_1], frontiers_sorted_2[indi_2], robotlocation)      # TODO this function need to be altered
+        # # update throught other cluster
+        # else:
+        #     # sclect another cluster randemly
+        #     cluster_2 = robotIndex
+        #     while cluster_2 != robotIndex:
+        #         cluster_2 = math.ceil(random.random() * (robot_amount - 1))
+        #     # print("cluster_2:", cluster_2)
+        #     frontiers_sorted_2 = allFrontiers_sorted[cluster_2]
+        #     # math.ceil(random.random() * (len(frontiers_2)-1))
+        #     indi_2 = resampling(frontiers_sorted_2, total_weights[cluster_2])
+        #     # math.ceil(random.random() * (len(frontiers)-1))
+        #     indi_1 = resampling(frontiers_sorted_1, total_weights[robotIndex])
+        #     if random.random() < 0.5:
+        #         indi_temp = pick_from_two_cluster(
+        #             centerfrontiers[robotIndex], centerfrontiers[cluster_2], robotlocation)     # TODO this function need to be altered
+        #     else:
+        #         indi_temp = pick_from_two_cluster(
+        #             frontiers_sorted_1[indi_1], frontiers_sorted_2[indi_2], robotlocation)      # TODO this function need to be altered
 
-            [indi_temp.weight, indi_temp.dircetion]= calculate_distance(
-                map_grid_matrix, indi_temp.x, indi_temp.y, robotlocation)
+        #     [indi_temp.weight, indi_temp.direction] = calculate_distance(
+        #         map_grid_matrix, indi_temp.x, indi_temp.y, robotlocation)
 
-            # replace the relative frontier directly
-            frontiers_1[i] = indi_temp
+        #     # replace the relative frontier directly
+        #     frontiers_1[i] = indi_temp
 
     return frontiers_1
 
@@ -218,8 +220,25 @@ def resampling(frontiers, total_weight):
     return ind
 
 
+# def pick_from_two_cluster(frontier_W_1, frontier_W_2, robotlocation_W):
+#     reject_distance = 5
+
+#     ff_distance = math.hypot(
+#         (frontier_R_1.x - frontier_R_2.x), (frontier_R_1.y - frontier_R_2.y))
+
+#     if ff_distance < reject_distance:
+#         if ff_distance != 0:
+            
+#         else:
+            
+#     else:
+
+#     indi_temp_W = Frontier(0, 0, 0, [0, 0])
+#     return indi_temp_W
+
+
 def pick_from_two_cluster(frontier_W_1, frontier_W_2, robotlocation_W):
-    reject_distance = 5
+    reject_distance = 7
     indi_temp_R = Frontier(0, 0, 0, [0, 0])
     # print("frontier_W_1:", frontier_W_1.x, frontier_W_1.y)
     # print("frontier_W_2:", frontier_W_2.x, frontier_W_2.y)
@@ -266,6 +285,7 @@ def calculate_distance(map_grid_matrix, x, y, robotlocation):
     map_array = np.array(map_grid_matrix)
     [rows, cols] = map_array.shape
     # print('rows:%d cols:%d', rows, cols)
+
     for i in range(rows):
         for j in range(cols):
             if(map_array[i, j] == UNEXPLARATION_AREA):
@@ -278,13 +298,13 @@ def calculate_distance(map_grid_matrix, x, y, robotlocation):
     # calculate the distance by astar
     [distance, next_position] = astar_distance(
         map_array, (robotlocation.x, robotlocation.y), (x,  y))
-    # print(distance)
-    # print(next_position)
+
+    print("goal:", x, y)
+    print("robotlocation:", robotlocation.x, robotlocation.y)
+    print("next_position:", next_position)
+    print("distance:", distance)
 
     distance = 1 / distance
-    # print("frontier", x, y)
-    # print("robotlocation", robotlocation.x, robotlocation.y)
-    # print("distance", distance)
     return distance, next_position
 
 
@@ -295,10 +315,11 @@ def directionSelect(frontiers, robotlocation):
     downWeight = 0
     for i in range(len(frontiers)):
         frontier = frontiers[i]
-        print("frontier", frontier.direction[0], frontier.direction[0])
+        print("frontier", frontier.x, frontier.y)
         print("next position:", frontier.direction)
         print("robotlocation", robotlocation.x, robotlocation.y)
-        direction = calc_angle(robotlocation.x, robotlocation.y, frontier.direction[0], frontier.direction[0])
+        direction = calc_angle(
+            robotlocation.x, robotlocation.y, frontier.direction[0], frontier.direction[1])
         print("direction:", direction)
         if direction > 45 and direction <= 175:
             downWeight += frontier.weight
@@ -308,11 +329,12 @@ def directionSelect(frontiers, robotlocation):
             upWeight += frontier.weight
         if (direction > 315 and direction <= 360) or (direction > 0 and direction <= 45):
             rightWeight += frontier.weight
-    # print("leftWeight:", leftWeight)
-    # print("downWeight:", downWeight)
-    # print("rightWeight", rightWeight)
-    # print("upWeight:", upWeight)
+    print("leftWeight:", leftWeight)
+    print("downWeight:", downWeight)
+    print("rightWeight", rightWeight)
+    print("upWeight:", upWeight)
     maxWeight = 0
+    action = random.randint(1, 4)
     if maxWeight < leftWeight:
         action = 1
         maxWeight = leftWeight
