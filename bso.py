@@ -173,11 +173,15 @@ def updateIndividualByBSO(robot_amount, robotIndex, allFrontiers, map_grid_matri
             # math.ceil(random.random() * (len(frontiers)-1))
             indi_1 = resampling(frontiers_1, total_weights[robotIndex])
             if random.random() < 0.5:
-                indi_temp = pick_two_cluster(
-                    centerfrontiers[robotIndex], centerfrontiers[cluster_2], robotlocation)
+                # indi_temp = pick_from_two_cluster(
+                #     centerfrontiers[robotIndex], centerfrontiers[cluster_2], robotlocation)
+                indi_temp = pick_from_two_cluster(
+                    centerfrontiers[robotIndex], centerfrontiers[cluster_2], robotlocation, map_grid_matrix)
             else:
-                indi_temp = pick_two_cluster(
-                    frontiers_1[indi_1], frontiers_2[indi_2], robotlocation)
+                # indi_temp = pick_from_two_cluster(
+                #     frontiers_1[indi_1], frontiers_2[indi_2], robotlocation)
+                indi_temp = pick_from_two_cluster(
+                    frontiers_1[indi_1], frontiers_2[indi_2], robotlocation, map_grid_matrix)
             # print("robotlocation", robotlocation.x, robotlocation.y)
             indi_temp.weight = calculateDistance(
                 map_grid_matrix, indi_temp.x, indi_temp.y, robotlocation)
@@ -204,41 +208,83 @@ def resampling(frontiers, total_weight):
     return ind
 
 
-def pick_two_cluster(frontier_W_1, frontier_W_2, robotlocation_W):
-    reject_distance = 5
-    indi_temp_R = Frontier(0, 0, 0)
-    print("frontier_W_1:", frontier_W_1.x, frontier_W_1.y)
-    print("frontier_W_2:", frontier_W_2.x, frontier_W_2.y)
-    frontier_R_1 = Frontier(0, 0, 0)
-    frontier_R_1.x = frontier_W_1.x - robotlocation_W.x
-    frontier_R_1.y = frontier_W_1.y - robotlocation_W.y
-    frontier_R_2 = Frontier(0, 0, 0)
-    frontier_R_2.x = frontier_W_2.x - robotlocation_W.x
-    frontier_R_2.y = frontier_W_2.y - robotlocation_W.y
-    # print("frontier_R_1:", frontier_R_1.x, frontier_R_1.y)
-    # print("frontier_R_2:", frontier_R_2.x, frontier_R_2.y)
+# def pick_from_two_cluster(frontier_W_1, frontier_W_2, robotlocation_W):
+#     reject_distance = 5
+#     indi_temp_R = Frontier(0, 0, 0)
+#     print("frontier_W_1:", frontier_W_1.x, frontier_W_1.y)
+#     print("frontier_W_2:", frontier_W_2.x, frontier_W_2.y)
+#     frontier_R_1 = Frontier(0, 0, 0)
+#     frontier_R_1.x = frontier_W_1.x - robotlocation_W.x
+#     frontier_R_1.y = frontier_W_1.y - robotlocation_W.y
+#     frontier_R_2 = Frontier(0, 0, 0)
+#     frontier_R_2.x = frontier_W_2.x - robotlocation_W.x
+#     frontier_R_2.y = frontier_W_2.y - robotlocation_W.y
+#     # print("frontier_R_1:", frontier_R_1.x, frontier_R_1.y)
+#     # print("frontier_R_2:", frontier_R_2.x, frontier_R_2.y)
 
+#     ff_distance = math.hypot(
+#         (frontier_R_1.x - frontier_R_2.x), (frontier_R_1.y - frontier_R_2.y))
+#     # print("ff_distance:", ff_distance)
+#     if ff_distance < reject_distance:
+#         if ff_distance != 0:
+#             indi_temp_R.x = frontier_R_1.x * \
+#                 (reject_distance * 2 / ff_distance)
+#             indi_temp_R.y = frontier_R_1.y * \
+#                 (reject_distance * 2 / ff_distance)
+#         else:
+#             indi_temp_R.x = frontier_R_1.x * 4
+#             indi_temp_R.y = frontier_R_1.y * 4
+#     else:
+#         indi_temp_R.x = frontier_R_1.x
+#         indi_temp_R.y = frontier_R_1.y
+#     print("indi_temp_R:", indi_temp_R.x, indi_temp_R.y)
+#     indi_temp_W = Frontier(0, 0, 0)
+#     indi_temp_W.x = indi_temp_R.x + robotlocation_W.x
+#     indi_temp_W.y = indi_temp_R.y + robotlocation_W.y
+#     # print("indi_temp_W:", indi_temp_W.x, indi_temp_W.y)
+#     return indi_temp_W
+
+def pick_from_two_cluster(frontier_W_1, frontier_W_2, robotlocation_W, map_grid_matrix):
+    reject_distance = 5
+
+    # calculate the distance betweem two frontiers
     ff_distance = math.hypot(
-        (frontier_R_1.x - frontier_R_2.x), (frontier_R_1.y - frontier_R_2.y))
-    # print("ff_distance:", ff_distance)
+        (frontier_W_1.x - frontier_W_2.x), (frontier_W_1.y - frontier_W_2.y))
+    print("ff_distance:", ff_distance)
+
+    # determine the search distance
     if ff_distance < reject_distance:
-        if ff_distance != 0:
-            indi_temp_R.x = frontier_R_1.x * \
-                (reject_distance * 2 / ff_distance)
-            indi_temp_R.y = frontier_R_1.y * \
-                (reject_distance * 2 / ff_distance)
-        else:
-            indi_temp_R.x = frontier_R_1.x * 4
-            indi_temp_R.y = frontier_R_1.y * 4
+        ff_distance = (2 * reject_distance**2)/(ff_distance + reject_distance)
+
+         # search better frontier candidates, based on the distance
+        candidate_frontiers = []
+        for i in range(int(frontier_W_1.x - ff_distance), int(frontier_W_1.x + ff_distance)):
+            # out of range
+            if i < 0 or i > 19:
+                continue
+            for j in range(int(frontier_W_1.y - ff_distance), int(frontier_W_1.y + ff_distance)):
+                # out of range
+                if i < 0 or j > 39:
+                    continue
+                if(map_grid_matrix[i][j] == EXPLORATED_BOUND):
+                    weight = math.hypot(
+                        (i - frontier_W_2.x), (j - frontier_W_2.y))
+                    frontier = Frontier(i, j, weight)
+                    candidate_frontiers.append(frontier)
+
+        # select the best candidate
+        # candidate_frontiers.sort(key=lambda x:x[0], reverse=True)
+        indi_temp_W = candidate_frontiers.pop()
+        for i in range(len(candidate_frontiers)):
+            # print("candidate_frontiers[i].weight:", candidate_frontiers[i].weight)
+            if indi_temp_W.weight < candidate_frontiers[i].weight:
+                indi_temp_W = candidate_frontiers[i]
+
+        # print("max.weight:", indi_temp_W.weight)
+        return indi_temp_W
     else:
-        indi_temp_R.x = frontier_R_1.x
-        indi_temp_R.y = frontier_R_1.y
-    print("indi_temp_R:", indi_temp_R.x, indi_temp_R.y)
-    indi_temp_W = Frontier(0, 0, 0)
-    indi_temp_W.x = indi_temp_R.x + robotlocation_W.x
-    indi_temp_W.y = indi_temp_R.y + robotlocation_W.y
-    # print("indi_temp_W:", indi_temp_W.x, indi_temp_W.y)
-    return indi_temp_W
+        ff_distance = ff_distance
+        return frontier_W_1
 
 
 def directionSelect(frontiers, robotlocation):
