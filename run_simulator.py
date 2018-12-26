@@ -10,13 +10,15 @@ from bso_astar import action
 from settings import *
 from simulator import Map
 from simulator import SimulatorStatus, Robot
-from exceptions import OutsideBoundryError
+from exceptions import OutsideBoundryError, ModeError
 from gui import Application
 
 
 class Simulator(object):
-    def __init__(self, result_filename, robot_init_filename=None, block_init_filename=None):
+    def __init__(self, result_filename, gui=True, robot_init_filename=None, block_init_filename=None):
         self.result_filename = result_filename
+
+        self.gui = gui
 
         self.configure()
 
@@ -54,30 +56,31 @@ class Simulator(object):
 
             self.map.view_real_exploration_bounds()
 
-            # Draw the grid
-            for row in range(int(self.cfg['MAP']['grid_row_dimension'])):
-                for column in range(int(self.cfg['MAP']['grid_column_dimension'])):
-                    color = GREY
-                    if self.map.grid[row][column] == ROBOT_AREA:
-                        color = RED
-                    elif self.map.grid[row][column] == BLOCK_AREA:
-                        color = BLACK
-                    elif self.map.grid[row][column] == EXPLORATED_AREA:
-                        color = WHITE
-                    elif self.map.grid[row][column] == EXPLORATED_BOUND:
-                        color = BLUE
-                    pygame.draw.rect(
-                        self.screen, color,
-                        [(int(self.cfg['MAP']['margin']) + int(self.cfg['MAP']['width'])) * column + int(
-                            self.cfg['MAP']['margin']),
-                         (int(self.cfg['MAP']['margin']) + int(self.cfg['MAP']['height'])) * row + int(
-                             self.cfg['MAP']['margin']), int(self.cfg['MAP']['width']), int(self.cfg['MAP']['height'])])
+            if self.gui:
+                # Draw the grid
+                for row in range(int(self.cfg['MAP']['grid_row_dimension'])):
+                    for column in range(int(self.cfg['MAP']['grid_column_dimension'])):
+                        color = GREY
+                        if self.map.grid[row][column] == ROBOT_AREA:
+                            color = RED
+                        elif self.map.grid[row][column] == BLOCK_AREA:
+                            color = BLACK
+                        elif self.map.grid[row][column] == EXPLORATED_AREA:
+                            color = WHITE
+                        elif self.map.grid[row][column] == EXPLORATED_BOUND:
+                            color = BLUE
+                        pygame.draw.rect(
+                            self.screen, color,
+                            [(int(self.cfg['MAP']['margin']) + int(self.cfg['MAP']['width'])) * column + int(
+                                self.cfg['MAP']['margin']),
+                             (int(self.cfg['MAP']['margin']) + int(self.cfg['MAP']['height'])) * row + int(
+                                 self.cfg['MAP']['margin']), int(self.cfg['MAP']['width']), int(self.cfg['MAP']['height'])])
 
-            # Limit to 60 frames per second
-            self.clock.tick(CLOCK_TICK)
+                # Limit to 60 frames per second
+                self.clock.tick(CLOCK_TICK)
 
-            # Go ahead and update the screen with what we've drawn.
-            pygame.display.flip()
+                # Go ahead and update the screen with what we've drawn.
+                pygame.display.flip()
 
             self.update_simulator_status(real_action_this_interval)
 
@@ -150,39 +153,41 @@ class Simulator(object):
         print(self.simulator_status)  # for debug
 
     def init_backend(self):
-        pygame.init()
+        if self.gui:
+            pygame.init()
 
-        screen_height = int(self.cfg['MAP']['grid_row_dimension']) * (
-                    int(self.cfg['MAP']['width']) + int(self.cfg['MAP']['margin']))
-        screen_width = int(self.cfg['MAP']['grid_column_dimension']) * (
-                    int(self.cfg['MAP']['height']) + int(self.cfg['MAP']['margin']))
-        self.screen = pygame.display.set_mode([screen_width, screen_height])
-        self.screen.fill(GREEN)
+            screen_height = int(self.cfg['MAP']['grid_row_dimension']) * (
+                        int(self.cfg['MAP']['width']) + int(self.cfg['MAP']['margin']))
+            screen_width = int(self.cfg['MAP']['grid_column_dimension']) * (
+                        int(self.cfg['MAP']['height']) + int(self.cfg['MAP']['margin']))
+            self.screen = pygame.display.set_mode([screen_width, screen_height])
+            self.screen.fill(GREEN)
 
-        pygame.display.set_caption(
-            "Frontier-based Unknown Environment Exploration")
-        self.clock = pygame.time.Clock()
-        for row in range(int(self.cfg['MAP']['grid_row_dimension'])):
-            for column in range(int(self.cfg['MAP']['grid_column_dimension'])):
-                pygame.draw.rect(
-                    self.screen, GREY,
-                    [(int(self.cfg['MAP']['margin']) + int(self.cfg['MAP']['width'])) * column + int(
-                        self.cfg['MAP']['margin']),
-                     (int(self.cfg['MAP']['margin']) + int(self.cfg['MAP']['height'])) * row + int(
-                         self.cfg['MAP']['margin']), int(self.cfg['MAP']['width']), int(self.cfg['MAP']['height'])])
+            pygame.display.set_caption(
+                "Frontier-based Unknown Environment Exploration")
+            self.clock = pygame.time.Clock()
+            for row in range(int(self.cfg['MAP']['grid_row_dimension'])):
+                for column in range(int(self.cfg['MAP']['grid_column_dimension'])):
+                    pygame.draw.rect(
+                        self.screen, GREY,
+                        [(int(self.cfg['MAP']['margin']) + int(self.cfg['MAP']['width'])) * column + int(
+                            self.cfg['MAP']['margin']),
+                         (int(self.cfg['MAP']['margin']) + int(self.cfg['MAP']['height'])) * row + int(
+                             self.cfg['MAP']['margin']), int(self.cfg['MAP']['width']), int(self.cfg['MAP']['height'])])
 
     def configure(self):
-        # root = tk.Tk()
-        # root.geometry("500x500")
-        # app = Application(master=root)
-        # app.mainloop()
+        if self.gui is True:
+            root = tk.Tk()
+            root.geometry("500x500")
+            app = Application(master=root)
+            app.mainloop()
 
         self.cfg = configparser.ConfigParser()
         self.cfg.read('settings.ini')
         self.mode = self.cfg['MODE']['mode']
 
     def init_map(self, robot_init_filename, block_init_filename):
-        if self.mode == 'SELECTION':
+        if self.mode == 'SELECTION' and self.gui:
             click_squences = {}
             selecting = True
             while selecting:
@@ -236,6 +241,9 @@ class Simulator(object):
 
         elif self.mode == 'RANDOM_INIT':
             self.origin_map = self.load_elements_by_random()
+
+        else:
+            raise ModeError('Mode no found!')
 
     def gui_exit(self):
         pygame.quit()

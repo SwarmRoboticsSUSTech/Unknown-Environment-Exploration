@@ -10,3 +10,11 @@ class OutsideBoundryError(UNException):
 
     def __str__(self):
         return (repr(self.value))
+
+
+class ModeError(UNException):
+    def __init__(self, value):
+        self.value = value
+
+    def __str__(self):
+        return (repr(self.value))
